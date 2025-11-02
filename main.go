@@ -61,6 +61,62 @@ func main() {
 				},
 			},
 			{
+				Name:  "add",
+				Usage: "Add an existing project into cradle",
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name:      "path",
+						UsageText: "path to the project directory",
+						Config: cli.StringConfig{
+							TrimSpace: true,
+						},
+					},
+				},
+				Action: func(ctx context.Context, c *cli.Command) error {
+					projectPath := c.StringArg("path")
+					if projectPath == "" {
+						return fmt.Errorf("provide a project path")
+					}
+
+					absProjectDirPath, err := AddProject(projectPath)
+					if err != nil {
+						return err
+					}
+
+					fmt.Println("Project added: ", absProjectDirPath)
+
+					return nil
+				},
+			},
+			{
+				Name:  "remove",
+				Usage: "Remove a project from cradle's management (this does not delete the project files)",
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name:      "name",
+						UsageText: "name of the project to remove",
+						Config: cli.StringConfig{
+							TrimSpace: true,
+						},
+					},
+				},
+				Action: func(ctx context.Context, c *cli.Command) error {
+					name := c.StringArg("name")
+					if name == "" {
+						return fmt.Errorf("provide a project name")
+					}
+
+					err := RemoveProject(name)
+					if err != nil {
+						return err
+					}
+
+					fmt.Println("Project removed from cradle")
+
+					return nil
+				},
+			},
+			{
 				Name:  "open",
 				Usage: "Open a project",
 				Arguments: []cli.Argument{

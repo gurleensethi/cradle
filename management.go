@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -12,7 +14,7 @@ import (
 
 func OpenProject(query string) (CradleProject, error) {
 	for _, project := range config.CradleConfig.Projects {
-		if path.Base(project.Path) == query {
+		if project.MatchPathOrName(query) {
 			return project, nil
 		}
 	}
@@ -32,7 +34,7 @@ func ListProjects() error {
 	t.Style().Format.Header = text.FormatTitle
 
 	for i, project := range config.CradleConfig.Projects {
-		t.AppendRow(table.Row{i + 1, project.Path, project.IsTemporary, project.CreatedAt.Format("2006-01-02 15:04:05")})
+		t.AppendRow(table.Row{i + 1, project.UniqueNameFromPath, project.Temporary, project.CreatedAt.Format("2006-01-02 15:04:05")})
 	}
 
 	t.Render()
@@ -62,12 +64,58 @@ func CreateProject(params CreateProjectParams) (string, error) {
 	}
 
 	cradleProject := CradleProject{
-		Path:        newProjectPath,
-		IsTemporary: params.Temp,
-		CreatedAt:   time.Now(),
+		Path:      newProjectPath,
+		Temporary: params.Temp,
+		CreatedAt: time.Now(),
 	}
 
 	config.CradleConfig.Projects = append(config.CradleConfig.Projects, cradleProject)
 
 	return newProjectPath, UpdateCradleConfigFile()
+}
+
+func AddProject(projectDirPath string) (string, error) {
+	projectDirPath, err := filepath.Abs(projectDirPath)
+	if err != nil {
+		return "", err
+	}
+
+	dirStat, err := os.Stat(projectDirPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", fmt.Errorf("project directory with specified path doesn't exist")
+		}
+	}
+
+	if !dirStat.IsDir() {
+		return "", fmt.Errorf("specified path is not a directory")
+	}
+
+	// Make sure there is no existing project with same name
+	for _, project := range config.CradleConfig.Projects {
+		if project.Path == projectDirPath {
+			return "", fmt.Errorf("project already exists")
+		}
+	}
+
+	cradleProject := CradleProject{
+		Path:      projectDirPath,
+		Temporary: false,
+		CreatedAt: time.Now(),
+	}
+
+	config.CradleConfig.Projects = append(config.CradleConfig.Projects, cradleProject)
+
+	return projectDirPath, UpdateCradleConfigFile()
+}
+
+func RemoveProject(name string) error {
+	for i, project := range config.CradleConfig.Projects {
+		if project.MatchPathOrName(name) {
+			config.CradleConfig.Projects = append(config.CradleConfig.Projects[:i], config.CradleConfig.Projects[i+1:]...)
+			return UpdateCradleConfigFile()
+		}
+	}
+
+	return fmt.Errorf("project not found")
 }
