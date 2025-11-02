@@ -1,16 +1,98 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/gurleensethi/cradle/config"
+	"github.com/urfave/cli/v3"
 )
 
 func main() {
-	err := config.Init()
+	cmd := &cli.Command{
+		Name:        "cradle",
+		Description: "CLI to manage local projects",
+		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
+			return ctx, InitConfig()
+		},
+		Commands: []*cli.Command{
+			{
+				Name:  "list",
+				Usage: "List all projects managed by cradle",
+				Action: func(ctx context.Context, c *cli.Command) error {
+					err := ListProjects()
+					if err != nil {
+						return err
+					}
+
+					return nil
+				},
+			},
+			{
+				Name:        "create",
+				Usage:       "Create a new project",
+				Description: "create new project",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:        "temp",
+						DefaultText: "create a temporary project",
+						Value:       false,
+						Usage:       "--temp",
+					},
+				},
+				Action: func(ctx context.Context, c *cli.Command) error {
+					if c.Args().Len() == 0 {
+						return fmt.Errorf("provide a project name")
+					}
+
+					newProjectPath, err := CreateProject(CreateProjectParams{
+						Name: strings.Join(c.Args().Slice(), "-"),
+						Temp: c.Bool("temp"),
+					})
+					if err != nil {
+						return err
+					}
+
+					fmt.Printf("eval cd %s", newProjectPath)
+
+					return nil
+				},
+			},
+			{
+				Name:  "open",
+				Usage: "Open a project",
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name:      "name",
+						UsageText: "name of the project to open",
+						Config: cli.StringConfig{
+							TrimSpace: true,
+						},
+					},
+				},
+				Action: func(ctx context.Context, c *cli.Command) error {
+					name := c.StringArg("name")
+					if name == "" {
+						return fmt.Errorf("provide a project name")
+					}
+
+					project, err := OpenProject(name)
+					if err != nil {
+						return err
+					}
+
+					fmt.Printf("eval cd %s", project)
+
+					return nil
+				},
+			},
+		},
+	}
+
+	err := cmd.Run(context.TODO(), os.Args)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
