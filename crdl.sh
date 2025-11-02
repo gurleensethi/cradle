@@ -1,5 +1,5 @@
 crdl() {
-    local out="$(go run . $@)"
+    local out="$(cradle $@)"
     if [[ "$out" == "eval"* ]]; then
         eval $(echo $out | cut -d' ' -f2-)
     else

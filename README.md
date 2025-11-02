@@ -10,7 +10,7 @@ Add the follwing function to your shell config file.
 
 ```bash
 crdl() {
-    out=$(go run . "$@")
+    out=$(cradle "$@")
     if [[ $out == eval* ]]; then
         eval "${out#eval}"
     else
