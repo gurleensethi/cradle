@@ -85,6 +85,8 @@ func AddProject(projectDirPath string) (string, error) {
 		if errors.Is(err, os.ErrNotExist) {
 			return "", fmt.Errorf("project directory with specified path doesn't exist")
 		}
+
+		return "", err
 	}
 
 	if !dirStat.IsDir() {
