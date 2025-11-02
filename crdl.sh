@@ -1,8 +1,8 @@
 crdl() {
-    local out="$(cradle $@)"
-    if [[ "$out" == "eval"* ]]; then
-        eval $(echo $out | cut -d' ' -f2-)
+    out=$(cradle "$@")
+    if [[ $out == eval* ]]; then
+        eval "${out#eval}"
     else
-        echo $out
+        printf '%s\n' "$out"
     fi
 }
