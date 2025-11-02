@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 )
 
 func OpenProject(query string) (CradleProject, error) {
@@ -16,13 +17,19 @@ func OpenProject(query string) (CradleProject, error) {
 		}
 	}
 
-	return CradleProject{}, fmt.Errorf("`%s` project not found", query)
+	return CradleProject{}, fmt.Errorf("%s project not found", query)
 }
 
 func ListProjects() error {
+	if len(config.CradleConfig.Projects) == 0 {
+		fmt.Println("No projects found")
+		return nil
+	}
+
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"#", "Project Path", "Temporary", "Created Time"})
+	t.Style().Format.Header = text.FormatTitle
 
 	for i, project := range config.CradleConfig.Projects {
 		t.AppendRow(table.Row{i + 1, project.Path, project.IsTemporary, project.CreatedAt.Format("2006-01-02 15:04:05")})

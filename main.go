@@ -18,8 +18,9 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "list",
-				Usage: "List all projects managed by cradle",
+				Name:    "list",
+				Usage:   "List all projects managed by cradle",
+				Aliases: []string{"ls"},
 				Action: func(ctx context.Context, c *cli.Command) error {
 					err := ListProjects()
 					if err != nil {
@@ -82,7 +83,7 @@ func main() {
 						return err
 					}
 
-					fmt.Printf("eval cd %s", project)
+					fmt.Printf("eval cd %s", project.Path)
 
 					return nil
 				},

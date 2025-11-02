@@ -159,6 +159,8 @@ func UpdateCradleConfigFile() error {
 		return err
 	}
 
+	fileBytes = append([]byte(CradleConfigFileHeader+"\n\n"), fileBytes...)
+
 	return os.WriteFile(config.CradleConfigFilePath, fileBytes, 0666)
 }
 
