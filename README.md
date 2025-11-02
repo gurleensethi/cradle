@@ -1,12 +1,18 @@
-# cradle 🧺
+# Cradle 🧺
 
-Install using Go,
+Cradle helps you manage your local projects.
+
+## Installation
+
+To install Cradle, use the following command:
 
 ```bash
 go install github.com/gurleensethi/cradle@latest
 ```
 
-Add the follwing function to your shell config file.
+## Shell Configuration
+
+Add the helper function to your shell's configuration file for easy usage:
 
 ```bash
 crdl() {
@@ -19,14 +25,21 @@ crdl() {
 }
 ```
 
-Bash
+### For Bash Users
+
+To configure Cradle for Bash, append the helper script to your `.bashrc`:
 
 ```bash
-curl https://github.com/gurleensethi/cradle/blob/main/crdl.sh >> ~/.bashrc
+curl -s https://raw.githubusercontent.com/gurleensethi/cradle/main/crdl.sh >> ~/.bashrc
 ```
 
-ZSH
+### For Zsh Users
+
+To configure Cradle for Zsh, append the helper script to your `.zshrc`:
 
 ```bash
-curl https://github.com/gurleensethi/cradle/blob/main/crdl.sh >> ~/.zshrc
+curl -s https://raw.githubusercontent.com/gurleensethi/cradle/main/crdl.sh >> ~/.zshrc
 ```
+
+After adding the script, remember to restart your terminal or source the configuration file to apply the changes.
+
