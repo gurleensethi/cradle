@@ -187,11 +187,3 @@ func UpdateCradleConfigFile() error {
 
 	return os.WriteFile(config.CradleConfigFilePath, fileBytes, 0666)
 }
-
-func Get() *Config {
-	if config == nil {
-		panic("call config.Init() before using config")
-	}
-
-	return config
-}
