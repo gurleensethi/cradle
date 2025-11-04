@@ -89,8 +89,9 @@ func main() {
 				},
 			},
 			{
-				Name:  "remove",
-				Usage: "Remove a project from cradle's management (this does not delete the project files)",
+				Name:    "remove",
+				Usage:   "Remove a project from cradle's management (this does not delete the project files)",
+				Aliases: []string{"rm"},
 				Arguments: []cli.Argument{
 					&cli.StringArg{
 						Name:      "name",

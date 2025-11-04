@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 func OpenProject(query string) (CradleProject, error) {
@@ -28,16 +28,27 @@ func ListProjects() error {
 		return nil
 	}
 
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"#", "Project Path", "Temporary", "Created Time"})
-	t.Style().Format.Header = text.FormatTitle
-
-	for i, project := range config.CradleConfig.Projects {
-		t.AppendRow(table.Row{i + 1, project.UniqueNameFromPath, project.Temporary, project.CreatedAt.Format("2006-01-02 15:04:05")})
+	rows := [][]string{}
+	for _, project := range config.CradleConfig.Projects {
+		rows = append(rows, []string{
+			project.UniqueNameFromPath,
+			project.Path,
+			fmt.Sprintf("%v", project.Temporary),
+			project.CreatedAt.Format("2006-01-02 15:04:05"),
+		})
 	}
 
-	t.Render()
+	rowStyle := lipgloss.NewStyle().Padding(0, 1)
+
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			return rowStyle
+		}).
+		Headers("Name", "Path", "Temporary", "Time").
+		Rows(rows...)
+
+	fmt.Println(t)
 
 	return nil
 }
