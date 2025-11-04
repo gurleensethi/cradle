@@ -132,3 +132,45 @@ func RemoveProject(name string) error {
 
 	return fmt.Errorf("project not found")
 }
+
+func CleanupTemporaryProjects() (int, error) {
+	var count int
+	for _, project := range config.CradleConfig.Projects {
+		if project.Temporary {
+			count++
+		}
+	}
+
+	if count == 0 {
+		fmt.Println("No temporary projects to clean up.")
+		return 0, nil
+	}
+
+	var confirmation string
+	fmt.Fprintf(os.Stderr, "Are you sure you want to delete %d temporary projects (Y/N):", count)
+	fmt.Scanln(&confirmation)
+
+	if confirmation != "Y" && confirmation != "y" {
+		fmt.Println("Cleanup aborted.")
+		return 0, nil
+	}
+
+	updatedProjects := []CradleProject{}
+	for _, project := range config.CradleConfig.Projects {
+		if project.Temporary {
+			// Remove the project directory
+			err := os.RemoveAll(project.Path)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			updatedProjects = append(updatedProjects, project)
+		}
+	}
+
+	fmt.Printf("Removed %d temporary projects.\n", count)
+
+	config.CradleConfig.Projects = updatedProjects
+
+	return len(updatedProjects), UpdateCradleConfigFile()
+}

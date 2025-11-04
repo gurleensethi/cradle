@@ -145,6 +145,14 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "cleanup",
+				Usage: "Remove all temporary projects that were created by cradle. ",
+				Action: func(ctx context.Context, c *cli.Command) error {
+					_, err := CleanupTemporaryProjects()
+					return err
+				},
+			},
 		},
 	}
 
