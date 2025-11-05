@@ -16,11 +16,11 @@ Add the helper function to your shell's configuration file for easy usage:
 
 ```bash
 crdl() {
-    out=$(cradle "$@")
+    out=$(CRADLE_CMDOUT=1 cradle "$@" 3>&1 1>&2 2>&3)
     if [[ $out == eval* ]]; then
         eval "${out#eval}"
     else
-        printf '%s\n' "$out"
+        printf '%s' "$out"
     fi
 }
 ```
@@ -42,4 +42,3 @@ curl -s https://raw.githubusercontent.com/gurleensethi/cradle/main/crdl.sh >> ~/
 ```
 
 After adding the script, remember to restart your terminal or source the configuration file to apply the changes.
-

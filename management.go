@@ -147,7 +147,7 @@ func CleanupTemporaryProjects() (int, error) {
 	}
 
 	var confirmation string
-	fmt.Fprintf(os.Stderr, "Are you sure you want to delete %d temporary projects (Y/N):", count)
+	fmt.Printf("Are you sure you want to delete %d temporary projects (Y/N):", count)
 	fmt.Scanln(&confirmation)
 
 	if confirmation != "Y" && confirmation != "y" {

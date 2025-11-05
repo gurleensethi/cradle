@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/urfave/cli/v3"
 )
 
@@ -15,6 +16,16 @@ func main() {
 		Description: "CLI to manage local projects",
 		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
 			return ctx, InitConfig()
+		},
+		Action: func(ctx context.Context, c *cli.Command) error {
+			program := tea.NewProgram(NewCradleUIModel(), tea.WithAltScreen())
+			model, err := program.Run()
+			if model, ok := model.(CradleUIModel); ok {
+				if model.SelectedProjectPath != "" && config.CradleCommandOut {
+					fmt.Fprintf(os.Stderr, "eval cd %s", model.SelectedProjectPath)
+				}
+			}
+			return err
 		},
 		Commands: []*cli.Command{
 			{
@@ -55,7 +66,9 @@ func main() {
 						return err
 					}
 
-					fmt.Printf("eval cd %s", newProjectPath)
+					if config.CradleCommandOut {
+						fmt.Fprintf(os.Stderr, "eval cd %s", newProjectPath)
+					}
 
 					return nil
 				},
@@ -140,7 +153,9 @@ func main() {
 						return err
 					}
 
-					fmt.Printf("eval cd %s", project.Path)
+					if config.CradleCommandOut {
+						fmt.Fprintf(os.Stderr, "eval cd %s", project.Path)
+					}
 
 					return nil
 				},

@@ -27,12 +27,22 @@ type Config struct {
 	CradleHomeDirPath    string
 	CradleConfigFilePath string
 	CradleConfig         CradleConfig
+
+	// CradleCommandOut indicates whether the command is being run
+	// in a mode where it should output commands to be eval'd by
+	// the caller shell.
+	CradleCommandOut bool
 }
 
 var config *Config
 
 func InitConfig() error {
 	config = &Config{}
+
+	config.CradleCommandOut = slices.Contains(
+		[]string{"1", "true", "TRUE", "True"},
+		strings.TrimSpace(os.Getenv("CRADLE_CMDOUT")),
+	)
 
 	cradleHomePath, err := getCradleHomeDir()
 	if err != nil {
