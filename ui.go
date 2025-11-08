@@ -2,36 +2,120 @@ package main
 
 import (
 	"fmt"
+	"io"
 
-	"github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type CradleUIModel struct {
-	table               table.Model
 	SelectedProjectPath string
+	List                list.Model
+	Width               int
+	Height              int
+}
+
+type ProjectListItem struct {
+	Project CradleProject
+}
+
+func (p ProjectListItem) Title() string       { return p.Project.UniqueNameFromPath }
+func (p ProjectListItem) Description() string { return p.Project.Path }
+func (p ProjectListItem) FilterValue() string {
+	return p.Project.UniqueNameFromPath + " " + p.Project.Path
+}
+
+type ProjectListDeletegate struct{}
+
+func (p ProjectListDeletegate) Height() int  { return 4 }
+func (p ProjectListDeletegate) Spacing() int { return 1 }
+
+func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+	projectItem, ok := item.(ProjectListItem)
+	if !ok {
+		return
+	}
+
+	// Style for the title
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Width(m.Width()).
+		Foreground(lipgloss.AdaptiveColor{
+			Light: "0",
+			Dark:  "209",
+		})
+
+	// Base style for each item
+	style := lipgloss.NewStyle().
+		Width(m.Width()).
+		MarginLeft(2).
+		PaddingLeft(1).
+		PaddingRight(1)
+
+	// Style for temporary project indicator
+	tempStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{
+			Light: "#FFFF00", // Yellow in light mode
+			Dark:  "#FFFF00", // Yellow in dark mode
+		})
+
+	if index == m.Index() {
+		style = style.
+			Background(lipgloss.AdaptiveColor{
+				Light: "#D3D3D3",   // Light background
+				Dark:  "#484848ff", // Darker background
+			}).
+			Border(lipgloss.NormalBorder(), false, false, false, true).
+			BorderForeground(lipgloss.AdaptiveColor{
+				Light: "209",
+				Dark:  "209",
+			})
+
+		titleStyle = titleStyle.
+			Background(lipgloss.AdaptiveColor{
+				Light: "#D3D3D3",   // Light background
+				Dark:  "#484848ff", // Darker background
+			})
+	} else {
+		style = style.
+			Foreground(lipgloss.AdaptiveColor{
+				Light: "240",
+				Dark:  "250",
+			}).
+			PaddingLeft(2)
+	}
+
+	tempState := ""
+	if projectItem.Project.Temporary {
+		tempState = tempStyle.Render("(temporary)")
+	}
+	title := titleStyle.Render(projectItem.Project.UniqueNameFromPath + " " + tempState)
+
+	str := lipgloss.JoinVertical(lipgloss.Left,
+		title,
+		projectItem.Project.Path,
+	)
+
+	fmt.Fprint(w, style.Render(str))
+}
+
+func (p ProjectListDeletegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	return nil
 }
 
 func NewCradleUIModel() CradleUIModel {
-	t := table.New(
-		table.WithFocused(true),
-	)
+	var listItems []list.Item
+	for _, project := range config.CradleConfig.Projects {
+		listItems = append(listItems, ProjectListItem{Project: project})
+	}
 
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-	t.SetStyles(s)
+	projectList := list.New(listItems, ProjectListDeletegate{}, 0, 0)
+	projectList.Title = "Select a project"
+	projectList.Styles.Title = lipgloss.NewStyle().Bold(true)
 
 	return CradleUIModel{
-		table: t,
+		List: projectList,
 	}
 }
 
@@ -45,50 +129,54 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		c.Height = msg.Height
+		c.Width = msg.Width
 		width := msg.Width - 8
-
-		columns := []table.Column{
-			{Title: "Name", Width: ((20 * width) / 100)},
-			{Title: "Path", Width: ((40 * width) / 100)},
-			{Title: "Temporary", Width: (10 * width) / 100},
-			{Title: "Time", Width: (30 * width) / 100},
-		}
-
-		var rows []table.Row
-		for _, project := range config.CradleConfig.Projects {
-			rows = append(rows, table.Row{
-				project.UniqueNameFromPath,
-				project.Path,
-				fmt.Sprintf("%v", project.Temporary),
-				project.CreatedAt.Format("2006-01-02 15:04:05"),
-			})
-		}
-
-		c.table.SetColumns(columns)
-		c.table.SetRows(rows)
-
-		c.table.SetWidth(width)
-		c.table.SetHeight(msg.Height - 2)
+		c.List.SetHeight(msg.Height - 3)
+		c.List.SetWidth(width)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return c, tea.Quit
 		case "enter":
-			c.SelectedProjectPath = c.table.SelectedRow()[1]
-			return c, tea.Quit
+			selectedItem, ok := c.List.SelectedItem().(ProjectListItem)
+			if ok {
+				c.SelectedProjectPath = selectedItem.Project.Path
+				return c, tea.Quit
+			}
 		}
 	default:
 		_ = msg
 	}
 
-	c.table, cmd = c.table.Update(msg)
+	c.List, cmd = c.List.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return c, tea.Batch(cmds...)
 }
 
+func (c CradleUIModel) Title() string {
+	return lipgloss.NewStyle().
+		Width(c.Width).
+		MarginBottom(1).
+		Foreground(lipgloss.Color("255")).
+		Background(lipgloss.Color("100")).
+		Bold(true).
+		Align(lipgloss.Center).
+		Render("cradle 🧺")
+}
+
 func (c CradleUIModel) View() string {
 	return lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		Render(c.table.View())
+		Width(c.Width).
+		Render(
+			lipgloss.JoinVertical(lipgloss.Center,
+				c.Title(),
+				lipgloss.NewStyle().
+					Width(c.Width-4).
+					Render(
+						lipgloss.NewStyle().Render(c.List.View()),
+					),
+			),
+		)
 }
