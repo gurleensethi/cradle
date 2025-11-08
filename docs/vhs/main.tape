@@ -10,7 +10,7 @@ Sleep 500ms
 Down 1
 Sleep 250ms
 Down 1
-Sleep 250ms
+Sleep 500ms
 Enter
 
 Sleep 500ms

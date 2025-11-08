@@ -6,7 +6,14 @@ vars:
   GREETING: Hello, World!
 
 tasks:
+  # generate-vhs:
+  #   dir: ./docs/vhs
+  #   cmd: 'parallel --progress --bar --tag vhs {} ::: list.tape main.tape'
+  #   silent: true
   generate-vhs:
     dir: ./docs/vhs
-    cmd: 'parallel --progress --bar --tag vhs {} ::: list.tape main.tape'
+    cmds:
+      - for: ['main.tape', 'list.tape']
+        cmd: |
+          vhs {{.ITEM}}
     silent: true
