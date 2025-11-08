@@ -4,7 +4,7 @@ Cradle helps you manage your local projects.
 
 ## Installation
 
-To install Cradle, use the following command:
+Install using **Go**:
 
 ```bash
 go install github.com/gurleensethi/cradle@latest
