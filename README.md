@@ -12,7 +12,7 @@ go install github.com/gurleensethi/cradle@latest
 
 ## Shell Configuration
 
-Add the helper function to your shell's configuration file for easy usage:
+Add the helper function to your shell's configuration file:
 
 ```bash
 crdl() {
@@ -24,6 +24,8 @@ crdl() {
     fi
 }
 ```
+
+> **Note**: This configuration is required to enable directory switching functionality. Without it, you won't be able to change directories using Cradle.
 
 ### For Bash Users
 
