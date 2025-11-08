@@ -135,6 +135,9 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.List.SetHeight(msg.Height - 8)
 		c.List.SetWidth(MinInt(width, 100))
 	case tea.KeyMsg:
+		if c.List.FilterState() == list.Filtering {
+			break
+		}
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return c, tea.Quit

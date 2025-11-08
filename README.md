@@ -42,3 +42,13 @@ curl -s https://raw.githubusercontent.com/gurleensethi/cradle/main/crdl.sh >> ~/
 ```
 
 After adding the script, remember to restart your terminal or source the configuration file to apply the changes.
+
+## Usage
+
+### Use with TUI.
+
+![](./docs/vhs/gen/main.gif)
+
+### List projects
+
+![](./docs/vhs/gen/list.gif)

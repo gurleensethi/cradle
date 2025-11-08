@@ -30,10 +30,17 @@ func ListProjects() error {
 
 	rows := [][]string{}
 	for _, project := range config.CradleConfig.Projects {
+		var temp string
+		if project.Temporary {
+			temp = "Yes"
+		} else {
+			temp = "No"
+		}
+
 		rows = append(rows, []string{
 			project.UniqueNameFromPath,
 			project.Path,
-			fmt.Sprintf("%v", project.Temporary),
+			temp,
 			project.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
 	}
