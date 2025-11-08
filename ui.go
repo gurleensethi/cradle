@@ -56,15 +56,15 @@ func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item
 	// Style for temporary project indicator
 	tempStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.AdaptiveColor{
-			Light: "#FFFF00", // Yellow in light mode
-			Dark:  "#FFFF00", // Yellow in dark mode
+			Light: "#FFFF00",
+			Dark:  "#FFFF00",
 		})
 
 	if index == m.Index() {
 		style = style.
 			Background(lipgloss.AdaptiveColor{
-				Light: "#D3D3D3",   // Light background
-				Dark:  "#484848ff", // Darker background
+				Light: "#D3D3D3",
+				Dark:  "#484848ff",
 			}).
 			Border(lipgloss.NormalBorder(), false, false, false, true).
 			BorderForeground(lipgloss.AdaptiveColor{
@@ -74,8 +74,8 @@ func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item
 
 		titleStyle = titleStyle.
 			Background(lipgloss.AdaptiveColor{
-				Light: "#D3D3D3",   // Light background
-				Dark:  "#484848ff", // Darker background
+				Light: "#D3D3D3",
+				Dark:  "#484848ff",
 			})
 	} else {
 		style = style.
@@ -132,8 +132,8 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.Height = msg.Height
 		c.Width = msg.Width
 		width := msg.Width - 8
-		c.List.SetHeight(msg.Height - 3)
-		c.List.SetWidth(width)
+		c.List.SetHeight(msg.Height - 8)
+		c.List.SetWidth(MinInt(width, 100))
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -158,12 +158,16 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (c CradleUIModel) Title() string {
 	return lipgloss.NewStyle().
 		Width(c.Width).
+		Height(4).
 		MarginBottom(1).
-		Foreground(lipgloss.Color("255")).
-		Background(lipgloss.Color("100")).
+		// Foreground(lipgloss.Color("255")).
+		// Background(lipgloss.Color("100")).
 		Bold(true).
 		Align(lipgloss.Center).
-		Render("cradle 🧺")
+		Render(` ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▄▄▄  ▗▖   ▗▄▄▄▖
+▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █ ▐▌   ▐▌   
+▐▌   ▐▛▀▚▖▐▛▀▜▌▐▌  █ ▐▌   ▐▛▀▀▘
+▝▚▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▀ ▐▙▄▄▖▐▙▄▄▖`)
 }
 
 func (c CradleUIModel) View() string {
@@ -173,10 +177,19 @@ func (c CradleUIModel) View() string {
 			lipgloss.JoinVertical(lipgloss.Center,
 				c.Title(),
 				lipgloss.NewStyle().
-					Width(c.Width-4).
 					Render(
-						lipgloss.NewStyle().Render(c.List.View()),
+						lipgloss.NewStyle().
+							Border(lipgloss.RoundedBorder()).
+							BorderForeground(lipgloss.Color("#7a7a7aff")).
+							Render(c.List.View()),
 					),
 			),
 		)
+}
+
+func MinInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
