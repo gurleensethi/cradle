@@ -1,6 +1,6 @@
 Set Framerate 60
 Set PlaybackSpeed 1.0
-Set FontSize 26
+Set FontSize 28
 Set Width 1920
 Set Height 1080
 Set WindowBar Colorful
