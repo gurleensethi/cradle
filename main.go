@@ -18,6 +18,11 @@ func main() {
 			return ctx, InitConfig()
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
+			if c.Args().Len() > 0 {
+				fmt.Printf("Unknown command: `%s`\n\n", c.Args().Get(0))
+				return cli.ShowRootCommandHelp(c.Root())
+			}
+
 			program := tea.NewProgram(NewCradleUIModel(), tea.WithAltScreen())
 			model, err := program.Run()
 			if model, ok := model.(CradleUIModel); ok {
