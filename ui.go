@@ -28,7 +28,7 @@ func (p ProjectListItem) FilterValue() string {
 
 type ProjectListDeletegate struct{}
 
-func (p ProjectListDeletegate) Height() int  { return 4 }
+func (p ProjectListDeletegate) Height() int  { return 3 }
 func (p ProjectListDeletegate) Spacing() int { return 0 }
 
 func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
@@ -49,8 +49,9 @@ func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item
 	// Base style for each item
 	style := lipgloss.NewStyle().
 		Width(m.Width()).
-		Margin(0, 2, 0, 2).
-		Padding(1)
+		Margin(0, 2, 1, 2).
+		PaddingLeft(1).
+		PaddingRight(1)
 
 	// Style for temporary project indicator
 	tempStyle := lipgloss.NewStyle().
