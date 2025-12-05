@@ -29,7 +29,7 @@ func (p ProjectListItem) FilterValue() string {
 type ProjectListDeletegate struct{}
 
 func (p ProjectListDeletegate) Height() int  { return 4 }
-func (p ProjectListDeletegate) Spacing() int { return 1 }
+func (p ProjectListDeletegate) Spacing() int { return 0 }
 
 func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	projectItem, ok := item.(ProjectListItem)
@@ -49,9 +49,8 @@ func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item
 	// Base style for each item
 	style := lipgloss.NewStyle().
 		Width(m.Width()).
-		MarginLeft(2).
-		PaddingLeft(1).
-		PaddingRight(1)
+		Margin(0, 2, 0, 2).
+		Padding(1)
 
 	// Style for temporary project indicator
 	tempStyle := lipgloss.NewStyle().
@@ -72,11 +71,7 @@ func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item
 				Dark:  "209",
 			})
 
-		titleStyle = titleStyle.
-			Background(lipgloss.AdaptiveColor{
-				Light: "#D3D3D3",
-				Dark:  "#484848ff",
-			})
+		titleStyle = titleStyle.Bold(true)
 	} else {
 		style = style.
 			Foreground(lipgloss.AdaptiveColor{
@@ -132,7 +127,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.Height = msg.Height
 		c.Width = msg.Width
 		width := msg.Width - 8
-		c.List.SetHeight(msg.Height - 8)
+		c.List.SetHeight(msg.Height - 7)
 		c.List.SetWidth(MinInt(width, 100))
 	case tea.KeyMsg:
 		if c.List.FilterState() == list.Filtering {

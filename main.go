@@ -57,6 +57,11 @@ func main() {
 						Value:       false,
 						Usage:       "--temp",
 					},
+					&cli.StringFlag{
+						Name:     "template",
+						Usage:    "specify a template to use for project creation",
+						Required: false,
+					},
 				},
 				Action: func(ctx context.Context, c *cli.Command) error {
 					if c.Args().Len() == 0 {
@@ -64,8 +69,9 @@ func main() {
 					}
 
 					newProjectPath, err := CreateProject(CreateProjectParams{
-						Name: strings.Join(c.Args().Slice(), "-"),
-						Temp: c.Bool("temp"),
+						Name:     strings.Join(c.Args().Slice(), "-"),
+						Temp:     c.Bool("temp"),
+						Template: c.String("template"),
 					})
 					if err != nil {
 						return err

@@ -61,8 +61,9 @@ func ListProjects() error {
 }
 
 type CreateProjectParams struct {
-	Name string
-	Temp bool
+	Name     string
+	Temp     bool
+	Template string
 }
 
 func CreateProject(params CreateProjectParams) (string, error) {
@@ -73,6 +74,27 @@ func CreateProject(params CreateProjectParams) (string, error) {
 		if project.Path == newProjectPath {
 			return "", fmt.Errorf("project already exists")
 		}
+	}
+
+	// If a template is specified, use it to create the project
+	if params.Template != "" {
+		templateData, err := GetTemplate(params.Template)
+		if err != nil {
+			if errors.Is(err, ErrNotExists) {
+				return "", fmt.Errorf("template %s does not exist", params.Template)
+			}
+
+			return "", err
+		}
+
+		userInputs, err := ReadUserInputs(templateData)
+		if err != nil {
+			return "", err
+		}
+
+		fmt.Println(userInputs)
+
+		return "", fmt.Errorf("template-based project creation not yet implemented")
 	}
 
 	// Create the project directory
