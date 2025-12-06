@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
+	"text/template"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -76,6 +78,8 @@ func CreateProject(params CreateProjectParams) (string, error) {
 		}
 	}
 
+	files := make(map[string]string)
+
 	// If a template is specified, use it to create the project
 	if params.Template != "" {
 		templateData, err := GetTemplate(params.Template)
@@ -92,15 +96,37 @@ func CreateProject(params CreateProjectParams) (string, error) {
 			return "", err
 		}
 
-		fmt.Println(userInputs)
+		for filePath, templateFile := range templateData.Files {
+			buffer := bytes.NewBuffer([]byte{})
 
-		return "", fmt.Errorf("template-based project creation not yet implemented")
+			t, err := template.New("").Parse(string(templateFile))
+			if err != nil {
+				// TODO: add better error message, denoting which file failed
+				// TODO: rendering and why.
+				return "", err
+			}
+
+			err = t.Execute(buffer, userInputs)
+			if err != nil {
+				return "", err
+			}
+
+			files[filePath] = buffer.String()
+		}
 	}
 
 	// Create the project directory
 	err := os.Mkdir(newProjectPath, os.ModePerm)
 	if err != nil {
 		return "", err
+	}
+
+	for filePath, fileContent := range files {
+		err := os.WriteFile(path.Join(newProjectPath, filePath), []byte(fileContent), 0644)
+		if err != nil {
+			// TODO: return better error message, denoting which file failed to be created.
+			return "", err
+		}
 	}
 
 	cradleProject := CradleProject{
