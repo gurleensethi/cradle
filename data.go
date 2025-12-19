@@ -7,6 +7,7 @@ type CradleProject struct {
 	CreatedAt          time.Time `toml:"created_at"`
 	Temporary          bool      `toml:"temporary"`
 	UniqueNameFromPath string    `toml:"-"`
+	CreatedBy          string    `toml:"created_by"`
 }
 
 func (p CradleProject) MatchPathOrName(query string) bool {

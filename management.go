@@ -133,6 +133,7 @@ func CreateProject(params CreateProjectParams) (string, error) {
 		Path:      newProjectPath,
 		Temporary: params.Temp,
 		CreatedAt: time.Now(),
+		CreatedBy: "cradle",
 	}
 
 	config.CradleConfig.Projects = append(config.CradleConfig.Projects, cradleProject)
