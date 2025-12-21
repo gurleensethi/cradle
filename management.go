@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -229,4 +230,34 @@ func CleanupTemporaryProjects() (int, error) {
 	config.CradleConfig.Projects = updatedProjects
 
 	return len(updatedProjects), UpdateCradleConfigFile()
+}
+
+func Doctor() error {
+	var issues []string
+
+	for _, project := range config.CradleConfig.Projects {
+		stat, err := os.Stat(project.Path)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				issues = append(issues, fmt.Sprintf("- %s: project path does not exist", project.Path))
+			} else {
+				// Collect all errors instead of returning early for generic os.Stat errors
+				issues = append(issues, fmt.Sprintf("- %s: failed to access project path: %v", project.Path, err))
+			}
+			continue
+		}
+
+		if !stat.IsDir() {
+			issues = append(issues, fmt.Sprintf("- %s: project path is a file, not a directory", project.Path))
+		}
+	}
+
+	if len(issues) == 0 {
+		fmt.Println("No issues found ✓")
+	} else {
+		fmt.Printf("Found %d issues:\n", len(issues))
+		fmt.Println(strings.Join(issues, "\n"))
+	}
+
+	return nil
 }

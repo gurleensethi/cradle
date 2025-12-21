@@ -179,6 +179,13 @@ func main() {
 					return err
 				},
 			},
+			{
+				Name:  "doctor",
+				Usage: "Check health of cradle, find broken projects and fix problems",
+				Action: func(ctx context.Context, c *cli.Command) error {
+					return Doctor()
+				},
+			},
 		},
 	}
 
