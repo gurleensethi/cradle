@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"regexp"
 	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,59 +20,70 @@ var templateFS embed.FS
 
 var ErrNotExists = errors.New("template does not exist")
 
-type FloatValidationRule struct {
+type TemplateInputValidation struct {
+	Pattern string   `yaml:"pattern"`
 	Message string   `yaml:"message"`
+	MinLen  *int     `yaml:"min_len,omitempty"`
+	MaxLen  *int     `yaml:"max_len,omitempty"`
 	Min     *float64 `yaml:"min,omitempty"`
 	Max     *float64 `yaml:"max,omitempty"`
 }
 
-type StringValidationRule struct {
-	Pattern string `yaml:"pattern"`
-	Message string `yaml:"message"`
-	MinLen  *int   `yaml:"min_len,omitempty"`
-	MaxLen  *int   `yaml:"max_len,omitempty"`
-}
-
-type TemplateInputValidation struct {
-	Float  *FloatValidationRule  `yaml:"float,omitempty"`
-	String *StringValidationRule `yaml:"string,omitempty"`
-}
-
-func (tiv *TemplateInputValidation) Validate(input string) string {
-	if tiv.Float != nil {
+func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
+	if inputType == "float" {
 		numValue, err := strconv.ParseFloat(input, 64)
 		if err != nil {
-			if tiv.Float.Message != "" {
-				return tiv.Float.Message
-			}
-
-			return "invalid number"
+			return "must be a valid float"
 		}
 
-		if tiv.Float.Min != nil && float64(numValue) < *tiv.Float.Min {
-			return fmt.Sprintf("number must be greater than %v", *tiv.Float.Min)
+		if tiv.Min != nil && float64(numValue) < *tiv.Min {
+			return fmt.Sprintf("number must be greater than %v", *tiv.Min)
 		}
 
-		if tiv.Float.Max != nil && float64(numValue) > *tiv.Float.Max {
-			return fmt.Sprintf("number must be less than %v", *tiv.Float.Max)
+		if tiv.Max != nil && float64(numValue) > *tiv.Max {
+			return fmt.Sprintf("number must be less than %v", *tiv.Max)
 		}
 	}
 
-	if tiv.String != nil {
+	if inputType == "string" {
 		// Validate as string
 		// (Implementation of string validation can be added here)
+
+		if tiv.Pattern != "" {
+			regex, err := regexp.Compile(tiv.Pattern)
+			if err != nil {
+				return fmt.Sprintf("invalid regex: %v %v", err, tiv.Pattern)
+			}
+
+			if !regex.MatchString(input) {
+				return fmt.Sprintf("should match pattern `%s`", tiv.Pattern)
+			}
+		}
+
+		if tiv.MinLen != nil {
+			if len(input) < *tiv.MinLen {
+				return fmt.Sprintf("need to be at least %d characters", *tiv.MinLen)
+			}
+		}
+
+		if tiv.MaxLen != nil {
+			if len(input) > *tiv.MaxLen {
+				return fmt.Sprintf("cannot to be longer than %d characters", *tiv.MaxLen)
+			}
+		}
 	}
 
 	return ""
 }
 
 type TemplateInput struct {
-	Name     string                  `yaml:"name"`
-	Default  string                  `yaml:"default"`
-	Required bool                    `yaml:"required"`
-	Help     string                  `yaml:"help"`
-	Pattern  string                  `yaml:"pattern"`
-	Validate TemplateInputValidation `yaml:"validate,omitempty"`
+	Name        string                  `yaml:"name"`
+	Default     string                  `yaml:"default"`
+	Required    bool                    `yaml:"required"`
+	Description string                  `yaml:"description"`
+	Pattern     string                  `yaml:"pattern"`
+	Type        string                  `yaml:"type"`
+	Validate    TemplateInputValidation `yaml:"validate,omitempty"`
 }
 
 type TemplateFile string
@@ -119,17 +131,40 @@ func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 
 	var fields []huh.Field
 	for _, input := range td.Inputs {
+		title := input.Name
+		if input.Required {
+			title += "*"
+		}
+
+		description := input.Description
+		if input.Default != "" {
+			description += " (default: " + input.Default + ")"
+		}
+
 		field := huh.NewInput().
-			Title(input.Name).
-			Description(input.Help).
+			Title(title).
+			Description(description).
+			PlaceholderFunc(func() string {
+				if input.Default != "" {
+					return "default: " + input.Default + ""
+				}
+				return ""
+			}, nil).
 			Validate(func(s string) error {
-				if input.Required && s == "" {
-					return errors.New(input.Name + " is required")
+				if input.Required {
+					if input.Default != "" {
+						userInputs[input.Name] = input.Default
+					} else {
+						return errors.New(input.Name + " is required")
+					}
 				}
 
-				validationMessage := input.Validate.Validate(s)
-				if validationMessage != "" {
-					return errors.New(input.Name + " " + validationMessage)
+				// Only validate if value is provided
+				if s != "" {
+					validationMessage := input.Validate.Validate(input.Type, s)
+					if validationMessage != "" {
+						return errors.New(input.Name + " " + validationMessage)
+					}
 				}
 
 				userInputs[input.Name] = s

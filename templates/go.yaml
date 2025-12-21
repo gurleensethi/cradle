@@ -5,19 +5,19 @@ inputs:
   - name: GoVersion
     default: "1.25"
     required: true
-    help: Specify the Go version for the project.
+    description: Specify the Go version for the project.
+    type: float
     validate:
-        float:
-            message: must be a valid number.
-            min: 1
+        message: must be a valid number.
+        min: 1
 
   - name: ModuleName
-    help: The module name for the Go project (e.g., github.com/username/projectname).
+    description: The module name for the Go project (e.g., github.com/username/projectname).
     required: true
+    type: string
     validate:
-        string:
-            pattern: "^[a-zA-Z0-9_~.-]+(/[a-zA-Z0-9_~.-]+)*$"
-            message: Module name must be a valid.
+        pattern: "^[a-zA-Z0-9_~.-]+(/[a-zA-Z0-9_~.-]+)*$"
+        message: Module name must be a valid.
 
 files:
     go.mod: |
