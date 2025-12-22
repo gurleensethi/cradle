@@ -45,6 +45,21 @@ func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
 		}
 	}
 
+	if inputType == "int" {
+		numValue, err := strconv.Atoi(input)
+		if err != nil {
+			return "must be a valid integer"
+		}
+
+		if tiv.Min != nil && numValue < int(*tiv.Min) {
+			return fmt.Sprintf("number must be greater than %v", *tiv.Min)
+		}
+
+		if tiv.Max != nil && numValue > int(*tiv.Max) {
+			return fmt.Sprintf("number must be less than %v", *tiv.Max)
+		}
+	}
+
 	if inputType == "string" {
 		// Validate as string
 		// (Implementation of string validation can be added here)
@@ -138,29 +153,24 @@ func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 
 		description := input.Description
 		if input.Default != "" {
-			description += " (default: " + input.Default + ")"
+			description += "\n(default: " + input.Default + ")"
 		}
 
 		field := huh.NewInput().
 			Title(title).
 			Description(description).
 			PlaceholderFunc(func() string {
-				if input.Default != "" {
-					return "default: " + input.Default + ""
-				}
-				return ""
+				return input.Default
 			}, nil).
 			Validate(func(s string) error {
-				if input.Required {
+				if s == "" {
 					if input.Default != "" {
 						userInputs[input.Name] = input.Default
-					} else {
+						return nil
+					} else if input.Required { // nothing provided, no default, but required
 						return errors.New(input.Name + " is required")
 					}
-				}
-
-				// Only validate if value is provided
-				if s != "" {
+				} else {
 					validationMessage := input.Validate.Validate(input.Type, s)
 					if validationMessage != "" {
 						return errors.New(input.Name + " " + validationMessage)

@@ -1,6 +1,6 @@
 version: v1
-name: Go
-description: Template for a basic Go project
+name: Go Http
+description: Setup a basic go http server
 
 inputs:
   - name: GoVersion
@@ -20,6 +20,15 @@ inputs:
         pattern: "^[a-zA-Z0-9_~.-]+(/[a-zA-Z0-9_~.-]+)*$"
         message: Module name must be a valid.
 
+  - name: Port
+    description: Port at which http server will listen and serve requests
+    default: 8080
+    required: true
+    type: int
+    validate:
+        min: 0
+        max: 65535
+
 files:
     go.mod: |
         module {{.ModuleName}}
@@ -29,16 +38,30 @@ files:
     main.go: |
         package main
 
-        import "fmt"
+        import (
+            "fmt"
+            "net/http"
+        )
 
         func main() {
-            fmt.Println("Hello {{ .ProjectName }}!")
+            mux := http.NewServeMux()
+
+            mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+                w.WriteHeader(http.StatusOK)
+                w.Write([]byte("Hello from go!"))
+            })
+
+            addr := ":{{.Port}}"
+
+            fmt.Printf("listening on %s...\n", addr)
+
+            http.ListenAndServe(addr, mux)
         }
 
     README.md: |
         # {{.ProjectName}}
 
-        This is a basic Go project template.
+        This is a basic Go http project template.
 
     .gitignore: |
         # Binaries for the current project
