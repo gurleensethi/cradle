@@ -110,6 +110,23 @@ type TemplateData struct {
 	Files       map[string]TemplateFile `yaml:"files"`
 }
 
+func (td *TemplateData) Validate() error {
+	if len(td.Name) == 0 {
+		return errors.New("template name cannot be empty")
+	}
+
+	if len(td.Files) == 0 {
+		return errors.New("template must define at least one file")
+	}
+
+	return nil
+}
+
+// GetTemplate loads the template based on the provided template source.
+// Supported sources:
+// - Inbuild templates
+// - URLs
+// - File Paths (local file)
 func GetTemplate(templateName string) (*TemplateData, error) {
 	// Check if the template exists in the embedded filesystem
 	data, err := templateFS.ReadFile("templates/" + templateName + ".yaml")
