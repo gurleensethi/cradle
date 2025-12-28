@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
@@ -97,6 +98,12 @@ func CreateProject(params CreateProjectParams) (string, error) {
 			return "", err
 		}
 
+		templateInput := map[string]string{
+			"ProjectName": params.Name,
+		}
+
+		maps.Copy(templateInput, userInputs)
+
 		for filePath, templateFile := range templateData.Files {
 			buffer := bytes.NewBuffer([]byte{})
 
@@ -107,7 +114,7 @@ func CreateProject(params CreateProjectParams) (string, error) {
 				return "", err
 			}
 
-			err = t.Execute(buffer, userInputs)
+			err = t.Execute(buffer, templateInput)
 			if err != nil {
 				return "", err
 			}
