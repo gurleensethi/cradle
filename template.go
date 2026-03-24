@@ -12,6 +12,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 	"gopkg.in/yaml.v3"
 )
 
@@ -160,6 +161,13 @@ func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 	if len(td.Inputs) == 0 {
 		return userInputs, nil
 	}
+
+	fmt.Println(
+		lipgloss.NewStyle().
+			Margin(1).
+			Underline(true).
+			Render(td.Name + " - " + td.Description),
+	)
 
 	var fields []huh.Field
 	for _, input := range td.Inputs {
