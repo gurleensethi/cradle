@@ -1,15 +1,6 @@
 package main
 
-import "time"
+import "github.com/gurleensethi/cradle/internal/types"
 
-type CradleProject struct {
-	Path               string    `toml:"path"`
-	CreatedAt          time.Time `toml:"created_at"`
-	Temporary          bool      `toml:"temporary"`
-	UniqueNameFromPath string    `toml:"-"`
-	CreatedBy          string    `toml:"created_by"`
-}
-
-func (p CradleProject) MatchPathOrName(query string) bool {
-	return p.Path == query || p.UniqueNameFromPath == query
-}
+// CradleProject represents a project managed by cradle.
+type CradleProject = types.CradleProject

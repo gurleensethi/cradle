@@ -14,26 +14,33 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/gurleensethi/cradle/internal/config"
+	cradleTemplate "github.com/gurleensethi/cradle/internal/template"
+	"github.com/gurleensethi/cradle/internal/types"
 )
 
-func OpenProject(query string) (CradleProject, error) {
-	for _, project := range config.CradleConfig.Projects {
+// OpenProject opens a project by query.
+// Deprecated: Use command.Open() instead.
+func OpenProject(query string) (types.CradleProject, error) {
+	for _, project := range config.Get().CradleConfig.Projects {
 		if project.MatchPathOrName(query) {
 			return project, nil
 		}
 	}
 
-	return CradleProject{}, fmt.Errorf("%s project not found", query)
+	return types.CradleProject{}, fmt.Errorf("%s project not found", query)
 }
 
+// ListProjects lists all managed projects.
+// Deprecated: Use command.List() instead.
 func ListProjects() error {
-	if len(config.CradleConfig.Projects) == 0 {
+	if len(config.Get().CradleConfig.Projects) == 0 {
 		fmt.Println("No projects found")
 		return nil
 	}
 
 	rows := [][]string{}
-	for _, project := range config.CradleConfig.Projects {
+	for _, project := range config.Get().CradleConfig.Projects {
 		var temp string
 		if project.Temporary {
 			temp = "Yes"
@@ -64,17 +71,21 @@ func ListProjects() error {
 	return nil
 }
 
+// CreateProjectParams holds parameters for creating a project.
+// Deprecated: Use command.Create() instead.
 type CreateProjectParams struct {
 	Name     string
 	Temp     bool
 	Template string
 }
 
+// CreateProject creates a new project.
+// Deprecated: Use command.Create() instead.
 func CreateProject(params CreateProjectParams) (string, error) {
-	newProjectPath := path.Join(config.CradleHomeDirPath, params.Name)
+	newProjectPath := path.Join(config.Get().CradleHomeDirPath, params.Name)
 
 	// Make sure there is no existing project with same name
-	for _, project := range config.CradleConfig.Projects {
+	for _, project := range config.Get().CradleConfig.Projects {
 		if project.Path == newProjectPath {
 			return "", fmt.Errorf("project already exists")
 		}
@@ -84,16 +95,16 @@ func CreateProject(params CreateProjectParams) (string, error) {
 
 	// If a template is specified, use it to create the project
 	if params.Template != "" {
-		templateData, err := GetTemplate(params.Template)
+		templateData, err := cradleTemplate.GetTemplate(params.Template)
 		if err != nil {
-			if errors.Is(err, ErrNotExists) {
+			if errors.Is(err, cradleTemplate.ErrNotExists) {
 				return "", fmt.Errorf("template %s does not exist", params.Template)
 			}
 
 			return "", err
 		}
 
-		userInputs, err := ReadUserInputs(templateData)
+		userInputs, err := cradleTemplate.ReadUserInputs(templateData)
 		if err != nil {
 			return "", err
 		}
@@ -137,18 +148,20 @@ func CreateProject(params CreateProjectParams) (string, error) {
 		}
 	}
 
-	cradleProject := CradleProject{
+	cradleProject := types.CradleProject{
 		Path:      newProjectPath,
 		Temporary: params.Temp,
 		CreatedAt: time.Now(),
 		CreatedBy: "cradle",
 	}
 
-	config.CradleConfig.Projects = append(config.CradleConfig.Projects, cradleProject)
+	config.Get().CradleConfig.Projects = append(config.Get().CradleConfig.Projects, cradleProject)
 
-	return newProjectPath, UpdateCradleConfigFile()
+	return newProjectPath, config.UpdateConfigFile()
 }
 
+// AddProject adds an existing project to cradle.
+// Deprecated: Use command.Add() instead.
 func AddProject(projectDirPath string) (string, error) {
 	projectDirPath, err := filepath.Abs(projectDirPath)
 	if err != nil {
@@ -169,37 +182,41 @@ func AddProject(projectDirPath string) (string, error) {
 	}
 
 	// Make sure there is no existing project with same name
-	for _, project := range config.CradleConfig.Projects {
+	for _, project := range config.Get().CradleConfig.Projects {
 		if project.Path == projectDirPath {
 			return "", fmt.Errorf("project already exists")
 		}
 	}
 
-	cradleProject := CradleProject{
+	cradleProject := types.CradleProject{
 		Path:      projectDirPath,
 		Temporary: false,
 		CreatedAt: time.Now(),
 	}
 
-	config.CradleConfig.Projects = append(config.CradleConfig.Projects, cradleProject)
+	config.Get().CradleConfig.Projects = append(config.Get().CradleConfig.Projects, cradleProject)
 
-	return projectDirPath, UpdateCradleConfigFile()
+	return projectDirPath, config.UpdateConfigFile()
 }
 
+// RemoveProject removes a project from cradle.
+// Deprecated: Use command.Remove() instead.
 func RemoveProject(name string) error {
-	for i, project := range config.CradleConfig.Projects {
+	for i, project := range config.Get().CradleConfig.Projects {
 		if project.MatchPathOrName(name) {
-			config.CradleConfig.Projects = append(config.CradleConfig.Projects[:i], config.CradleConfig.Projects[i+1:]...)
-			return UpdateCradleConfigFile()
+			config.Get().CradleConfig.Projects = append(config.Get().CradleConfig.Projects[:i], config.Get().CradleConfig.Projects[i+1:]...)
+			return config.UpdateConfigFile()
 		}
 	}
 
 	return fmt.Errorf("project not found")
 }
 
+// CleanupTemporaryProjects removes all temporary projects.
+// Deprecated: Use command.Cleanup() instead.
 func CleanupTemporaryProjects() (int, error) {
 	var count int
-	for _, project := range config.CradleConfig.Projects {
+	for _, project := range config.Get().CradleConfig.Projects {
 		if project.Temporary {
 			count++
 		}
@@ -219,8 +236,8 @@ func CleanupTemporaryProjects() (int, error) {
 		return 0, nil
 	}
 
-	updatedProjects := []CradleProject{}
-	for _, project := range config.CradleConfig.Projects {
+	updatedProjects := []types.CradleProject{}
+	for _, project := range config.Get().CradleConfig.Projects {
 		if project.Temporary {
 			// Remove the project directory
 			err := os.RemoveAll(project.Path)
@@ -234,15 +251,17 @@ func CleanupTemporaryProjects() (int, error) {
 
 	fmt.Printf("Removed %d temporary projects.\n", count)
 
-	config.CradleConfig.Projects = updatedProjects
+	config.Get().CradleConfig.Projects = updatedProjects
 
-	return len(updatedProjects), UpdateCradleConfigFile()
+	return len(updatedProjects), config.UpdateConfigFile()
 }
 
+// Doctor checks the health of cradle.
+// Deprecated: Use command.Doctor() instead.
 func Doctor() error {
 	var issues []string
 
-	for _, project := range config.CradleConfig.Projects {
+	for _, project := range config.Get().CradleConfig.Projects {
 		stat, err := os.Stat(project.Path)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {

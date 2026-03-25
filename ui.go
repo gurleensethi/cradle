@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/gurleensethi/cradle/internal/config"
 )
 
 type CradleUIModel struct {
@@ -102,7 +103,7 @@ func (p ProjectListDeletegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 
 func NewCradleUIModel() CradleUIModel {
 	var listItems []list.Item
-	for _, project := range config.CradleConfig.Projects {
+	for _, project := range config.Get().CradleConfig.Projects {
 		listItems = append(listItems, ProjectListItem{Project: project})
 	}
 
