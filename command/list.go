@@ -6,8 +6,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/urfave/cli/v3"
 	"github.com/gurleensethi/cradle/internal/config"
+	"github.com/urfave/cli/v3"
 )
 
 // List returns the list command for displaying all managed projects.
@@ -23,13 +23,14 @@ func List() *cli.Command {
 }
 
 func listProjects(ctx context.Context, c *cli.Command) error {
-	if len(config.Get().CradleConfig.Projects) == 0 {
+	projects := config.Projects()
+	if len(projects) == 0 {
 		fmt.Println("No projects found")
 		return nil
 	}
 
 	rows := [][]string{}
-	for _, project := range config.Get().CradleConfig.Projects {
+	for _, project := range projects {
 		var temp string
 		if project.Temporary {
 			temp = "Yes"

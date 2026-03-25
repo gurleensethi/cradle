@@ -7,8 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli/v3"
 	"github.com/gurleensethi/cradle/internal/config"
+	"github.com/gurleensethi/cradle/internal/types"
+	"github.com/urfave/cli/v3"
 )
 
 // Doctor returns the doctor command for checking the health of cradle.
@@ -25,7 +26,7 @@ func Doctor() *cli.Command {
 func doctor() error {
 	var issues []string
 
-	for _, project := range config.Get().CradleConfig.Projects {
+	config.ForEachProject(func(project types.CradleProject) bool {
 		stat, err := os.Stat(project.Path)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
@@ -34,13 +35,15 @@ func doctor() error {
 				// Collect all errors instead of returning early for generic os.Stat errors
 				issues = append(issues, fmt.Sprintf("- %s: failed to access project path: %v", project.Path, err))
 			}
-			continue
+			return true // continue
 		}
 
 		if !stat.IsDir() {
 			issues = append(issues, fmt.Sprintf("- %s: project path is a file, not a directory", project.Path))
 		}
-	}
+
+		return true // continue
+	})
 
 	if len(issues) == 0 {
 		fmt.Println("No issues found ✓")

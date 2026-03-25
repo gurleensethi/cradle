@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/gurleensethi/cradle/internal/config"
+	"github.com/gurleensethi/cradle/internal/types"
 )
 
 type CradleUIModel struct {
@@ -18,7 +19,7 @@ type CradleUIModel struct {
 }
 
 type ProjectListItem struct {
-	Project CradleProject
+	Project types.CradleProject
 }
 
 func (p ProjectListItem) Title() string       { return p.Project.UniqueNameFromPath }
@@ -103,7 +104,7 @@ func (p ProjectListDeletegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 
 func NewCradleUIModel() CradleUIModel {
 	var listItems []list.Item
-	for _, project := range config.Get().CradleConfig.Projects {
+	for _, project := range config.Projects() {
 		listItems = append(listItems, ProjectListItem{Project: project})
 	}
 
@@ -165,7 +166,7 @@ func (c CradleUIModel) Title() string {
 		Bold(true).
 		Align(lipgloss.Center).
 		Render(` ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▄▄▄  ▗▖   ▗▄▄▄▖
-▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █ ▐▌   ▐▌   
+▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █ ▐▌   ▐▌
 ▐▌   ▐▛▀▚▖▐▛▀▜▌▐▌  █ ▐▌   ▐▛▀▀▘
 ▝▚▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▀ ▐▙▄▄▖▐▙▄▄▖`)
 }

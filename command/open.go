@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/urfave/cli/v3"
 	"github.com/gurleensethi/cradle/internal/config"
 	"github.com/gurleensethi/cradle/internal/types"
+	"github.com/urfave/cli/v3"
 )
 
 // Open returns the open command for opening a project.
@@ -30,9 +30,9 @@ func Open() *cli.Command {
 				return fmt.Errorf("provide a project name")
 			}
 
-			project, err := openProject(name)
-			if err != nil {
-				return err
+			project, found := config.FindProject(name)
+			if !found {
+				return fmt.Errorf("%s project not found", name)
 			}
 
 			if config.Get().CradleCommandOut {
@@ -45,11 +45,9 @@ func Open() *cli.Command {
 }
 
 func openProject(query string) (types.CradleProject, error) {
-	for _, project := range config.Get().CradleConfig.Projects {
-		if project.MatchPathOrName(query) {
-			return project, nil
-		}
+	project, found := config.FindProject(query)
+	if !found {
+		return types.CradleProject{}, fmt.Errorf("%s project not found", query)
 	}
-
-	return types.CradleProject{}, fmt.Errorf("%s project not found", query)
+	return project, nil
 }

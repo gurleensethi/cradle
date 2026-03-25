@@ -12,10 +12,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/urfave/cli/v3"
 	"github.com/gurleensethi/cradle/internal/config"
 	cradleTemplate "github.com/gurleensethi/cradle/internal/template"
 	"github.com/gurleensethi/cradle/internal/types"
+	"github.com/urfave/cli/v3"
 )
 
 // Create returns the create command for creating new projects.
@@ -70,7 +70,7 @@ func createProject(params createProjectParams) (string, error) {
 	newProjectPath := path.Join(config.Get().CradleHomeDirPath, params.Name)
 
 	// Make sure there is no existing project with same name
-	for _, project := range config.Get().CradleConfig.Projects {
+	for _, project := range config.Projects() {
 		if project.Path == newProjectPath {
 			return "", fmt.Errorf("project already exists")
 		}
@@ -140,7 +140,5 @@ func createProject(params createProjectParams) (string, error) {
 		CreatedBy: "cradle",
 	}
 
-	config.Get().CradleConfig.Projects = append(config.Get().CradleConfig.Projects, cradleProject)
-
-	return newProjectPath, config.UpdateConfigFile()
+	return newProjectPath, config.AddProject(cradleProject)
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/urfave/cli/v3"
 	"github.com/gurleensethi/cradle/internal/config"
+	"github.com/urfave/cli/v3"
 )
 
 // Remove returns the remove command for removing projects from cradle.
@@ -29,8 +29,7 @@ func Remove() *cli.Command {
 				return fmt.Errorf("provide a project name")
 			}
 
-			err := removeProject(name)
-			if err != nil {
+			if err := config.RemoveProjectByName(name); err != nil {
 				return err
 			}
 
@@ -39,15 +38,4 @@ func Remove() *cli.Command {
 			return nil
 		},
 	}
-}
-
-func removeProject(name string) error {
-	for i, project := range config.Get().CradleConfig.Projects {
-		if project.MatchPathOrName(name) {
-			config.Get().CradleConfig.Projects = append(config.Get().CradleConfig.Projects[:i], config.Get().CradleConfig.Projects[i+1:]...)
-			return config.UpdateConfigFile()
-		}
-	}
-
-	return fmt.Errorf("project not found")
 }

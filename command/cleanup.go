@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/gurleensethi/cradle/internal/config"
-	"github.com/gurleensethi/cradle/internal/types"
 	"github.com/urfave/cli/v3"
 )
 
@@ -23,12 +22,8 @@ func Cleanup() *cli.Command {
 }
 
 func cleanupTemporaryProjects() (int, error) {
-	var count int
-	for _, project := range config.Get().CradleConfig.Projects {
-		if project.Temporary {
-			count++
-		}
-	}
+	tempProjects := config.TemporaryProjects()
+	count := len(tempProjects)
 
 	if count == 0 {
 		fmt.Println("No temporary projects to clean up.")
@@ -44,22 +39,21 @@ func cleanupTemporaryProjects() (int, error) {
 		return 0, nil
 	}
 
-	updatedProjects := []types.CradleProject{}
-	for _, project := range config.Get().CradleConfig.Projects {
-		if project.Temporary {
-			// Remove the project directory
-			err := os.RemoveAll(project.Path)
-			if err != nil {
-				return 0, err
-			}
-		} else {
-			updatedProjects = append(updatedProjects, project)
+	for _, project := range tempProjects {
+		// Remove the project directory
+		err := os.RemoveAll(project.Path)
+		if err != nil {
+			return 0, err
 		}
+	}
+
+	// Update config with only permanent projects
+	permanentProjects := config.PermanentProjects()
+	if err := config.UpdateProjects(permanentProjects); err != nil {
+		return 0, err
 	}
 
 	fmt.Printf("Removed %d temporary projects.\n", count)
 
-	config.Get().CradleConfig.Projects = updatedProjects
-
-	return len(updatedProjects), config.UpdateConfigFile()
+	return len(permanentProjects), nil
 }

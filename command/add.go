@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/urfave/cli/v3"
 	"github.com/gurleensethi/cradle/internal/config"
 	"github.com/gurleensethi/cradle/internal/types"
+	"github.com/urfave/cli/v3"
 )
 
 // Add returns the add command for adding existing projects to cradle.
@@ -65,7 +65,7 @@ func addProject(projectDirPath string) (string, error) {
 	}
 
 	// Make sure there is no existing project with same name
-	for _, project := range config.Get().CradleConfig.Projects {
+	for _, project := range config.Projects() {
 		if project.Path == projectDirPath {
 			return "", fmt.Errorf("project already exists")
 		}
@@ -77,7 +77,5 @@ func addProject(projectDirPath string) (string, error) {
 		CreatedAt: time.Now(),
 	}
 
-	config.Get().CradleConfig.Projects = append(config.Get().CradleConfig.Projects, cradleProject)
-
-	return projectDirPath, config.UpdateConfigFile()
+	return projectDirPath, config.AddProject(cradleProject)
 }
