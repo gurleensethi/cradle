@@ -15,7 +15,3 @@ Review all code documentation across the codebase and verify alignment with actu
 
 ## Scope
 - Code comments and docstrings
-- README and guides
-- API documentation
-- Type hints and signatures
-- Usage examples
