@@ -11,29 +11,46 @@ import (
 	"github.com/gurleensethi/cradle/internal/types"
 )
 
+// CradleUIModel implements the tea.Model interface for the main TUI.
+// It holds the project list state and the selected project path after user confirmation.
 type CradleUIModel struct {
+	// SelectedProjectPath stores the path of the project selected by the user.
 	SelectedProjectPath string
-	List                list.Model
-	Width               int
-	Height              int
+	// List is the bubbletea list component displaying projects.
+	List list.Model
+	// Width is the terminal width used for rendering.
+	Width int
+	// Height is the terminal height used for rendering.
+	Height int
 }
 
+// ProjectListItem implements list.Item for displaying a project in the TUI list.
 type ProjectListItem struct {
 	Project types.CradleProject
 }
 
-func (p ProjectListItem) Title() string       { return p.Project.UniqueNameFromPath }
+// Title returns the display title for the list item (the project's unique name).
+func (p ProjectListItem) Title() string { return p.Project.UniqueNameFromPath }
+
+// Description returns the display description for the list item (the project path).
 func (p ProjectListItem) Description() string { return p.Project.Path }
+
+// FilterValue returns the text used for filtering list items.
 func (p ProjectListItem) FilterValue() string {
 	return p.Project.UniqueNameFromPath + " " + p.Project.Path
 }
 
-type ProjectListDeletegate struct{}
+// ProjectListDelegate implements list.ItemDelegate for rendering project list items.
+type ProjectListDelegate struct{}
 
-func (p ProjectListDeletegate) Height() int  { return 3 }
-func (p ProjectListDeletegate) Spacing() int { return 0 }
+// Height returns the height of a single rendered list item.
+func (p ProjectListDelegate) Height() int { return 3 }
 
-func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+// Spacing returns the spacing between list items.
+func (p ProjectListDelegate) Spacing() int { return 0 }
+
+// Render draws a single list item to the writer with appropriate styling.
+func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	projectItem, ok := item.(ProjectListItem)
 	if !ok {
 		return
@@ -98,17 +115,18 @@ func (p ProjectListDeletegate) Render(w io.Writer, m list.Model, index int, item
 	fmt.Fprint(w, style.Render(str))
 }
 
-func (p ProjectListDeletegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (p ProjectListDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
+// NewCradleUIModel creates and initializes a new CradleUIModel with projects from the config.
 func NewCradleUIModel() CradleUIModel {
 	var listItems []list.Item
 	for _, project := range config.Projects() {
 		listItems = append(listItems, ProjectListItem{Project: project})
 	}
 
-	projectList := list.New(listItems, ProjectListDeletegate{}, 0, 0)
+	projectList := list.New(listItems, ProjectListDelegate{}, 0, 0)
 	projectList.Title = "Select a project"
 	projectList.Styles.Title = lipgloss.NewStyle().Bold(true)
 
@@ -117,10 +135,14 @@ func NewCradleUIModel() CradleUIModel {
 	}
 }
 
+// Init implements tea.Model.Init. It performs no initialization and returns nil.
 func (c CradleUIModel) Init() tea.Cmd {
 	return nil
 }
 
+// Update implements tea.Model.Update. It handles window sizing, key events,
+// and delegates list updates. Returns the updated model and a quit command
+// when the user selects a project or exits.
 func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
@@ -156,13 +178,12 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
+// Title returns the ASCII art banner for the TUI.
 func (c CradleUIModel) Title() string {
 	return lipgloss.NewStyle().
 		Width(c.Width).
 		Height(4).
 		MarginBottom(1).
-		// Foreground(lipgloss.Color("255")).
-		// Background(lipgloss.Color("100")).
 		Bold(true).
 		Align(lipgloss.Center).
 		Render(` ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▄▄▄  ▗▖   ▗▄▄▄▖
@@ -171,6 +192,8 @@ func (c CradleUIModel) Title() string {
 ▝▚▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▀ ▐▙▄▄▖▐▙▄▄▖`)
 }
 
+// View implements tea.Model.View. It renders the full TUI layout with the
+// title banner and the bordered project list.
 func (c CradleUIModel) View() string {
 	return lipgloss.NewStyle().
 		Width(c.Width).
@@ -188,6 +211,7 @@ func (c CradleUIModel) View() string {
 		)
 }
 
+// MinInt returns the smaller of two integers. Used for clamping the list width.
 func MinInt(a, b int) int {
 	if a < b {
 		return a
