@@ -9,11 +9,17 @@ import (
 
 // CradleProject represents a project managed by cradle.
 type CradleProject struct {
-	Path               string    `yaml:"path"`
-	CreatedAt          time.Time `yaml:"created_at"`
-	Temporary          bool      `yaml:"temporary"`
-	UniqueNameFromPath string    `yaml:"-"`
-	CreatedBy          string    `yaml:"created_by"`
+	// Path is the absolute path to the project directory.
+	Path string `yaml:"path"`
+	// CreatedAt is the timestamp when the project was registered.
+	CreatedAt time.Time `yaml:"created_at"`
+	// Temporary indicates whether the project is temporary.
+	Temporary bool `yaml:"temporary"`
+	// UniqueNameFromPath is a human-readable name derived from the project path.
+	// This field is not serialized to YAML (used for display and lookup only).
+	UniqueNameFromPath string `yaml:"-"`
+	// CreatedBy identifies the tool or user that registered this project.
+	CreatedBy string `yaml:"created_by"`
 }
 
 // MatchPathOrName reports whether the project's path or unique name exactly matches the query.

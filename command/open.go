@@ -45,6 +45,7 @@ func Open() *cli.Command {
 }
 
 // openProject looks up a project by name or path and returns it if found.
+// The query is matched against both the project's unique name and its full path.
 func openProject(query string) (types.CradleProject, error) {
 	project, found := config.FindProject(query)
 	if !found {

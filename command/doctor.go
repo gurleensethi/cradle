@@ -24,7 +24,9 @@ func Doctor() *cli.Command {
 }
 
 // doctor checks all registered project paths for existence and validity.
-// It reports any issues found without modifying the configuration.
+// It iterates through each project, verifies that the path exists and is a directory,
+// and collects any issues found. The function reports all issues at once rather
+// than failing on the first error.
 func doctor() error {
 	var issues []string
 

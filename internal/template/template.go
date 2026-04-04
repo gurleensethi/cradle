@@ -91,7 +91,7 @@ func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
 
 		if tiv.MaxLen != nil {
 			if len(input) > *tiv.MaxLen {
-				return fmt.Sprintf("cannot to be longer than %d characters", *tiv.MaxLen)
+				return fmt.Sprintf("cannot be longer than %d characters", *tiv.MaxLen)
 			}
 		}
 	}
