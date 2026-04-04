@@ -115,6 +115,8 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	fmt.Fprint(w, style.Render(str))
 }
 
+// Update handles tea.Msg for the project list delegate.
+// It performs no custom updates and returns nil.
 func (p ProjectListDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }

@@ -146,6 +146,8 @@ func PermanentProjects() []types.CradleProject {
 	return permanent
 }
 
+// save serializes the current configuration to the YAML config file,
+// sorting projects by path for consistent output.
 func save() error {
 	slices.SortFunc(instance.projects, func(a, b types.CradleProject) int {
 		return strings.Compare(a.Path, b.Path)
@@ -161,6 +163,8 @@ func save() error {
 	return os.WriteFile(instance.CradleConfigFilePath, fileBytes, 0666)
 }
 
+// getCradleHomeDir resolves the cradle home directory from the CRADLE_HOME
+// environment variable, falling back to $HOME/cradle if not set.
 func getCradleHomeDir() (string, error) {
 	cradleHomePath := strings.TrimSpace(os.Getenv(EnvCradleHome))
 	if cradleHomePath == "" {
@@ -175,6 +179,8 @@ func getCradleHomeDir() (string, error) {
 	return cradleHomePath, nil
 }
 
+// ensureCradleHomeDir creates the cradle home directory if it doesn't exist,
+// or returns an error if the path exists as a file.
 func ensureCradleHomeDir(dirPath string) error {
 	dirStat, err := os.Stat(dirPath)
 	if err != nil {
@@ -191,6 +197,8 @@ func ensureCradleHomeDir(dirPath string) error {
 	return fmt.Errorf("%s is a file, either delete the file or change cradle home path by setting `CRADLE_HOME` env to something else", dirPath)
 }
 
+// ensureCradleConfigFile creates the cradle.yaml config file if it doesn't exist,
+// or returns an error if the path exists as a directory.
 func ensureCradleConfigFile(dirPath string) (string, error) {
 	configFilePath := path.Join(dirPath, CradleConfigFileName)
 
@@ -220,6 +228,8 @@ func ensureCradleConfigFile(dirPath string) (string, error) {
 	return configFilePath, nil
 }
 
+// parseCradleConfigFile reads and parses the cradle.yaml config file,
+// generating unique names for each project based on their path components.
 func parseCradleConfigFile(configFilePath string) ([]types.CradleProject, error) {
 	var cradleConfig cradleConfig
 

@@ -11,7 +11,7 @@ type CradleProject struct {
 	CreatedBy          string    `yaml:"created_by"`
 }
 
-// MatchPathOrName checks if the project matches the given query by path or name.
+// MatchPathOrName reports whether the project's path or unique name exactly matches the query.
 func (p CradleProject) MatchPathOrName(query string) bool {
 	return p.Path == query || p.UniqueNameFromPath == query
 }

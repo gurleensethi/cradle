@@ -26,6 +26,7 @@ func SetTemplateFS(fs embed.FS) {
 	templateFS = &fs
 }
 
+// ErrNotExists is returned when a requested template is not found.
 var ErrNotExists = errors.New("template does not exist")
 
 // TemplateInputValidation defines validation rules for template inputs.

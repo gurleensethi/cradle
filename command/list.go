@@ -22,6 +22,7 @@ func List() *cli.Command {
 	}
 }
 
+// listProjects formats and displays all registered projects in a table.
 func listProjects(ctx context.Context, c *cli.Command) error {
 	projects := config.Projects()
 	if len(projects) == 0 {

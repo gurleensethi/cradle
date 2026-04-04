@@ -200,7 +200,9 @@ func RemoveProject(name string) error {
 	return config.RemoveProjectByName(name)
 }
 
-// CleanupTemporaryProjects removes all temporary projects.
+// CleanupTemporaryProjects prompts the user for confirmation and removes all
+// temporary projects from disk and configuration.
+// Returns the count of remaining permanent projects.
 // Deprecated: Use command.Cleanup() instead.
 func CleanupTemporaryProjects() (int, error) {
 	tempProjects := config.TemporaryProjects()
