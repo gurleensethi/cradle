@@ -16,8 +16,8 @@ import (
 type CradleUIModel struct {
 	// SelectedProjectPath stores the path of the project selected by the user.
 	SelectedProjectPath string
-	// List is the bubbletea list component displaying projects.
-	List list.Model
+	// ProjectList is the bubbletea list component displaying projects.
+	ProjectList list.Model
 	// Width is the terminal width used for rendering.
 	Width int
 	// Height is the terminal height used for rendering.
@@ -68,7 +68,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	// Base style for each item
 	style := lipgloss.NewStyle().
 		Width(m.Width()).
-		Margin(0, 2, 1, 2).
+		Margin(0, 1, 1, 1).
 		PaddingLeft(1).
 		PaddingRight(1)
 
@@ -129,11 +129,12 @@ func NewCradleUIModel() CradleUIModel {
 	}
 
 	projectList := list.New(listItems, ProjectListDelegate{}, 0, 0)
+	projectList.SetShowTitle(false)
 	projectList.Title = "Select a project"
 	projectList.Styles.Title = lipgloss.NewStyle().Bold(true)
 
 	return CradleUIModel{
-		List: projectList,
+		ProjectList: projectList,
 	}
 }
 
@@ -153,18 +154,18 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		c.Height = msg.Height
 		c.Width = msg.Width
-		width := msg.Width - 8
-		c.List.SetHeight(msg.Height - 7)
-		c.List.SetWidth(MinInt(width, 100))
+		width := msg.Width - 2
+		c.ProjectList.SetHeight(msg.Height - 2)
+		c.ProjectList.SetWidth(min(width))
 	case tea.KeyMsg:
-		if c.List.FilterState() == list.Filtering {
+		if c.ProjectList.FilterState() == list.Filtering {
 			break
 		}
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return c, tea.Quit
 		case "enter":
-			selectedItem, ok := c.List.SelectedItem().(ProjectListItem)
+			selectedItem, ok := c.ProjectList.SelectedItem().(ProjectListItem)
 			if ok {
 				c.SelectedProjectPath = selectedItem.Project.Path
 				return c, tea.Quit
@@ -174,7 +175,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		_ = msg
 	}
 
-	c.List, cmd = c.List.Update(msg)
+	c.ProjectList, cmd = c.ProjectList.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return c, tea.Batch(cmds...)
@@ -183,15 +184,12 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // Title returns the ASCII art banner for the TUI.
 func (c CradleUIModel) Title() string {
 	return lipgloss.NewStyle().
-		Width(c.Width).
-		Height(4).
-		MarginBottom(1).
+		Width(c.Width - 1).
 		Bold(true).
 		Align(lipgloss.Center).
-		Render(` ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▄▄▄  ▗▖   ▗▄▄▄▖
-▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █ ▐▌   ▐▌
-▐▌   ▐▛▀▚▖▐▛▀▜▌▐▌  █ ▐▌   ▐▛▀▀▘
-▝▚▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▀ ▐▙▄▄▖▐▙▄▄▖`)
+		Background(lipgloss.Color("#ff7300")).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Render(`cradle`)
 }
 
 // View implements tea.Model.View. It renders the full TUI layout with the
@@ -204,19 +202,8 @@ func (c CradleUIModel) View() string {
 				c.Title(),
 				lipgloss.NewStyle().
 					Render(
-						lipgloss.NewStyle().
-							Border(lipgloss.RoundedBorder()).
-							BorderForeground(lipgloss.Color("#7a7a7aff")).
-							Render(c.List.View()),
+						c.ProjectList.View(),
 					),
 			),
 		)
-}
-
-// MinInt returns the smaller of two integers. Used for clamping the list width.
-func MinInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
