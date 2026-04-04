@@ -4,11 +4,11 @@ import "time"
 
 // CradleProject represents a project managed by cradle.
 type CradleProject struct {
-	Path               string    `toml:"path"`
-	CreatedAt          time.Time `toml:"created_at"`
-	Temporary          bool      `toml:"temporary"`
-	UniqueNameFromPath string    `toml:"-"`
-	CreatedBy          string    `toml:"created_by"`
+	Path               string    `yaml:"path"`
+	CreatedAt          time.Time `yaml:"created_at"`
+	Temporary          bool      `yaml:"temporary"`
+	UniqueNameFromPath string    `yaml:"-"`
+	CreatedBy          string    `yaml:"created_by"`
 }
 
 // MatchPathOrName checks if the project matches the given query by path or name.

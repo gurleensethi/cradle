@@ -1,0 +1,5 @@
+projects:
+  - path: /path/to/cradble/example
+    temporary: true
+    created_by: cradle
+    created_at: 2026-01-01
