@@ -109,7 +109,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 
 	str := lipgloss.JoinVertical(lipgloss.Left,
 		title,
-		projectItem.Project.Path,
+		projectItem.Project.GetPathWithTruncatedHome(),
 	)
 
 	fmt.Fprint(w, style.Render(str))
@@ -130,8 +130,8 @@ func NewCradleUIModel() CradleUIModel {
 
 	projectList := list.New(listItems, ProjectListDelegate{}, 0, 0)
 	projectList.SetShowTitle(false)
-	projectList.Title = "Select a project"
-	projectList.Styles.Title = lipgloss.NewStyle().Bold(true)
+	projectList.FilterInput.Prompt = "Search: "
+	projectList.FilterInput.PromptStyle = lipgloss.NewStyle()
 
 	return CradleUIModel{
 		ProjectList: projectList,
@@ -155,7 +155,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.Height = msg.Height
 		c.Width = msg.Width
 		width := msg.Width - 2
-		c.ProjectList.SetHeight(msg.Height - 2)
+		c.ProjectList.SetHeight(msg.Height - 3)
 		c.ProjectList.SetWidth(min(width))
 	case tea.KeyMsg:
 		if c.ProjectList.FilterState() == list.Filtering {
@@ -185,6 +185,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (c CradleUIModel) Title() string {
 	return lipgloss.NewStyle().
 		Width(c.Width - 1).
+		MarginBottom(1).
 		Bold(true).
 		Align(lipgloss.Center).
 		Background(lipgloss.Color("#ff7300")).
