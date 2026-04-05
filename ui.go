@@ -67,7 +67,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 
 	// Base style for each item
 	style := lipgloss.NewStyle().
-		Width(m.Width()).
+		Width(m.Width()-3).
 		Margin(0, 1, 1, 1).
 		PaddingLeft(1).
 		PaddingRight(1)
@@ -83,7 +83,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 		style = style.
 			Background(lipgloss.AdaptiveColor{
 				Light: "#D3D3D3",
-				Dark:  "#484848ff",
+				Dark:  "#484848",
 			}).
 			Border(lipgloss.NormalBorder(), false, false, false, true).
 			BorderForeground(lipgloss.AdaptiveColor{
@@ -154,9 +154,8 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		c.Height = msg.Height
 		c.Width = msg.Width
-		width := msg.Width - 2
 		c.ProjectList.SetHeight(msg.Height - 3)
-		c.ProjectList.SetWidth(min(width))
+		c.ProjectList.SetWidth(msg.Width)
 	case tea.KeyMsg:
 		if c.ProjectList.FilterState() == list.Filtering {
 			break
@@ -184,13 +183,13 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // Title returns the ASCII art banner for the TUI.
 func (c CradleUIModel) Title() string {
 	return lipgloss.NewStyle().
-		Width(c.Width - 1).
+		Width(c.Width).
 		MarginBottom(1).
 		Bold(true).
 		Align(lipgloss.Center).
 		Background(lipgloss.Color("#ff7300")).
 		Foreground(lipgloss.Color("#FFFFFF")).
-		Render(`cradle`)
+		Render("c r a d l e")
 }
 
 // View implements tea.Model.View. It renders the full TUI layout with the

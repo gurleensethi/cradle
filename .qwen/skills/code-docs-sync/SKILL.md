@@ -13,6 +13,10 @@ Review all code documentation across the codebase and verify alignment with actu
 4. **Update**: Correct inaccurate, incomplete, or misleading documentation
 5. **Prioritize**: Flag critical documentation issues for high-impact code paths
 
+## Hard Rules
+- No package doc required
+- Don't document simple and obvious code and functions.
+- Don't change any code.
+
 ## Scope
 - Code comments and docstrings
-- No package doc required
