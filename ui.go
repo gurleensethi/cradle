@@ -189,7 +189,7 @@ func (c CradleUIModel) Title() string {
 		Align(lipgloss.Center).
 		Background(lipgloss.Color("#ff7300")).
 		Foreground(lipgloss.Color("#FFFFFF")).
-		Render("c r a d l e")
+		Render("cradle")
 }
 
 // View implements tea.Model.View. It renders the full TUI layout with the
