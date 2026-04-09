@@ -16,8 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// templateFS holds the embedded template files.
-// It must be set via SetTemplateFS before using template functions.
+// templateFS is the embedded template filesystem.
 var templateFS *embed.FS
 
 // SetTemplateFS sets the embed.FS containing template files.
@@ -39,12 +38,11 @@ type TemplateInputValidation struct {
 	Max     *float64 `yaml:"max,omitempty"`
 }
 
-// Validate validates an input value against the validation rules.
 func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
 	if inputType == "float" {
 		numValue, err := strconv.ParseFloat(input, 64)
 		if err != nil {
-			return "must be a valid float"
+			return "must be a valid number (float)"
 		}
 
 		if tiv.Min != nil && float64(numValue) < *tiv.Min {
@@ -59,7 +57,7 @@ func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
 	if inputType == "int" {
 		numValue, err := strconv.Atoi(input)
 		if err != nil {
-			return "must be a valid integer"
+			return "must be a valid number (integer)"
 		}
 
 		if tiv.Min != nil && numValue < int(*tiv.Min) {
@@ -110,10 +108,8 @@ type TemplateInput struct {
 	Validate    TemplateInputValidation `yaml:"validate,omitempty"`
 }
 
-// TemplateFile represents a file in a template.
 type TemplateFile string
 
-// TemplateData represents a project template.
 type TemplateData struct {
 	Name        string                  `yaml:"name"`
 	Description string                  `yaml:"description"`
@@ -121,7 +117,6 @@ type TemplateData struct {
 	Files       map[string]TemplateFile `yaml:"files"`
 }
 
-// Validate validates the template data.
 func (td *TemplateData) Validate() error {
 	if len(td.Name) == 0 {
 		return errors.New("template name cannot be empty")
@@ -162,7 +157,7 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 	return &template, nil
 }
 
-// ReadUserInputs prompts the user for template input values.
+// ReadUserInputs collects validated input values from the user.
 func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 	userInputs := make(map[string]string)
 	for _, input := range td.Inputs {

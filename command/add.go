@@ -45,10 +45,7 @@ func Add() *cli.Command {
 	}
 }
 
-// addProject validates an existing directory path and registers it as a cradle project.
-// It resolves the path to an absolute path, verifies the directory exists,
-// checks for duplicate registrations, and persists the project to the config.
-// Returns the absolute path of the added project.
+// addProject validates a directory and registers it as a cradle project. Returns the absolute path.
 func addProject(projectDirPath string) (string, error) {
 	projectDirPath, err := filepath.Abs(projectDirPath)
 	if err != nil {

@@ -60,21 +60,13 @@ func Create() *cli.Command {
 	}
 }
 
-// createProjectParams holds the parameters for creating a new project.
 type createProjectParams struct {
-	// Name is the name of the project.
-	Name string
-	// Temp indicates whether the project is temporary.
-	Temp bool
-	// Template is the name of the template to use (empty string means no template).
+	Name     string
+	Temp     bool
 	Template string
 }
 
-// createProject creates a new project directory with the given parameters.
-// If a template is specified, it processes the template files with user inputs.
-// The function validates the project name, creates the directory structure,
-// generates files from the template (if provided), and registers the project in the config.
-// Returns the absolute path of the created project.
+// createProject creates a project directory and registers it. Returns the created path.
 func createProject(params createProjectParams) (string, error) {
 	newProjectPath := path.Join(config.Get().CradleHomeDirPath, params.Name)
 

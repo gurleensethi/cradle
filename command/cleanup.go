@@ -21,10 +21,7 @@ func Cleanup() *cli.Command {
 	}
 }
 
-// cleanupTemporaryProjects prompts the user for confirmation and removes all
-// temporary project directories from disk, then updates the config to only
-// include permanent projects.
-// Returns the count of remaining permanent projects.
+// cleanupTemporaryProjects removes all temporary projects after user confirmation. Returns the count of remaining permanent projects.
 func cleanupTemporaryProjects() (int, error) {
 	tempProjects := config.TemporaryProjects()
 	count := len(tempProjects)

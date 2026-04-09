@@ -24,26 +24,19 @@ type cradleConfig struct {
 	Projects []types.CradleProject `yaml:"projects"`
 }
 
-// Config holds the cradle configuration.
 type Config struct {
-	// CradleHomeDirPath is the root directory for cradle data.
-	CradleHomeDirPath string
-	// CradleConfigFilePath is the full path to the cradle.yaml config file.
+	CradleHomeDirPath    string
 	CradleConfigFilePath string
-	// CradleCommandOut enables shell command output mode for cd integration.
-	CradleCommandOut bool
-	// projects is the list of managed projects (unexported for internal use).
-	projects []types.CradleProject
+	CradleCommandOut     bool
+	projects             []types.CradleProject
 }
 
 var instance Config
 
-// Get returns a copy of the configuration.
 func Get() Config {
 	return instance
 }
 
-// Init initializes the cradle configuration.
 func Init() error {
 	instance = Config{}
 
@@ -79,21 +72,18 @@ func Init() error {
 	return nil
 }
 
-// Projects returns a copy of the projects list.
 func Projects() []types.CradleProject {
 	projects := make([]types.CradleProject, len(instance.projects))
 	copy(projects, instance.projects)
 	return projects
 }
 
-// AddProject adds a project to the configuration and saves it.
 func AddProject(project types.CradleProject) error {
 	instance.projects = append(instance.projects, project)
 	return save()
 }
 
-// RemoveProjectByName removes a project by matching its name or path.
-// The query is matched against both the project's unique name and its full path.
+// RemoveProjectByName removes a project matching the given name or path.
 func RemoveProjectByName(name string) error {
 	for i, project := range instance.projects {
 		if project.MatchPathOrName(name) {
@@ -104,13 +94,11 @@ func RemoveProjectByName(name string) error {
 	return fmt.Errorf("project not found")
 }
 
-// UpdateProjects updates all projects and saves the configuration.
 func UpdateProjects(projects []types.CradleProject) error {
 	instance.projects = projects
 	return save()
 }
 
-// ForEachProject iterates over all projects.
 func ForEachProject(fn func(types.CradleProject) bool) {
 	for _, project := range instance.projects {
 		if !fn(project) {
@@ -119,7 +107,6 @@ func ForEachProject(fn func(types.CradleProject) bool) {
 	}
 }
 
-// FindProject finds a project by query (path or name).
 func FindProject(query string) (types.CradleProject, bool) {
 	for _, project := range instance.projects {
 		if project.MatchPathOrName(query) {
@@ -129,7 +116,6 @@ func FindProject(query string) (types.CradleProject, bool) {
 	return types.CradleProject{}, false
 }
 
-// TemporaryProjects returns all temporary projects.
 func TemporaryProjects() []types.CradleProject {
 	var temp []types.CradleProject
 	for _, project := range instance.projects {
@@ -140,7 +126,6 @@ func TemporaryProjects() []types.CradleProject {
 	return temp
 }
 
-// PermanentProjects returns all non-temporary projects.
 func PermanentProjects() []types.CradleProject {
 	var permanent []types.CradleProject
 	for _, project := range instance.projects {
@@ -151,8 +136,7 @@ func PermanentProjects() []types.CradleProject {
 	return permanent
 }
 
-// save serializes the current configuration to the YAML config file.
-// It sorts projects by path for consistent output and prepends a generated file header.
+// save writes the sorted configuration to the YAML config file.
 func save() error {
 	slices.SortFunc(instance.projects, func(a, b types.CradleProject) int {
 		return strings.Compare(a.Path, b.Path)
@@ -168,8 +152,7 @@ func save() error {
 	return os.WriteFile(instance.CradleConfigFilePath, fileBytes, 0666)
 }
 
-// getCradleHomeDir resolves the cradle home directory from the CRADLE_HOME
-// environment variable. If not set, it defaults to $HOME/cradle.
+// getCradleHomeDir resolves the cradle home directory from the environment or returns the default.
 func getCradleHomeDir() (string, error) {
 	cradleHomePath := strings.TrimSpace(os.Getenv(EnvCradleHome))
 	if cradleHomePath == "" {
@@ -184,8 +167,7 @@ func getCradleHomeDir() (string, error) {
 	return cradleHomePath, nil
 }
 
-// ensureCradleHomeDir creates the cradle home directory and all parent directories
-// if they don't exist. Returns an error if the path exists as a file instead of a directory.
+// ensureCradleHomeDir creates the cradle home directory if it does not exist.
 func ensureCradleHomeDir(dirPath string) error {
 	dirStat, err := os.Stat(dirPath)
 	if err != nil {
@@ -202,9 +184,7 @@ func ensureCradleHomeDir(dirPath string) error {
 	return fmt.Errorf("%s is a file, either delete the file or change cradle home path by setting `CRADLE_HOME` env to something else", dirPath)
 }
 
-// ensureCradleConfigFile creates the cradle.yaml config file in the specified directory
-// if it doesn't exist. Returns an error if the path exists as a directory.
-// Returns the full path to the config file.
+// ensureCradleConfigFile creates the config file if it does not exist and returns its path.
 func ensureCradleConfigFile(dirPath string) (string, error) {
 	configFilePath := path.Join(dirPath, CradleConfigFileName)
 
@@ -234,9 +214,7 @@ func ensureCradleConfigFile(dirPath string) (string, error) {
 	return configFilePath, nil
 }
 
-// parseCradleConfigFile reads and parses the cradle.yaml config file.
-// It generates unique names for each project based on their path components
-// and returns the parsed project list.
+// parseCradleConfigFile reads and parses the config file, populating project unique names.
 func parseCradleConfigFile(configFilePath string) ([]types.CradleProject, error) {
 	var cradleConfig cradleConfig
 
