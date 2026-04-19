@@ -127,7 +127,7 @@ func createProject(params createProjectParams) (string, error) {
 	}
 
 	for filePath, fileContent := range files {
-		err := os.WriteFile(path.Join(newProjectPath, filePath), []byte(fileContent), 0644)
+		err := os.WriteFile(path.Join(newProjectPath, filePath), []byte(fileContent), 0o644)
 		if err != nil {
 			// TODO: return better error message, denoting which file failed to be created.
 			return "", err

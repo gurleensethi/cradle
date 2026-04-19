@@ -9,9 +9,9 @@ import (
 
 // CradleProject represents a project managed by cradle.
 type CradleProject struct {
-	Path               string    `yaml:"path"`
-	CreatedAt          time.Time `yaml:"created_at"`
-	Temporary          bool      `yaml:"temporary"`
+	Path      string    `yaml:"path"`
+	CreatedAt time.Time `yaml:"created_at"`
+	Temporary bool      `yaml:"temporary"`
 	// UniqueNameFromPath is a display name derived from the project path (not serialized to YAML).
 	UniqueNameFromPath string `yaml:"-"`
 	CreatedBy          string `yaml:"created_by"`

@@ -37,6 +37,7 @@ func Get() Config {
 	return instance
 }
 
+// Init initializes the config singleton from CRADLE_HOME env (default ~/cradle), ensures directories/files exist, parses projects from YAML.
 func Init() error {
 	instance = Config{}
 
@@ -78,6 +79,7 @@ func Projects() []types.CradleProject {
 	return projects
 }
 
+// AddProject appends the project to the list and persists config to disk.
 func AddProject(project types.CradleProject) error {
 	instance.projects = append(instance.projects, project)
 	return save()
@@ -94,11 +96,13 @@ func RemoveProjectByName(name string) error {
 	return fmt.Errorf("project not found")
 }
 
+// UpdateProjects replaces the projects list and persists to disk.
 func UpdateProjects(projects []types.CradleProject) error {
 	instance.projects = projects
 	return save()
 }
 
+// ForEachProject iterates projects calling fn on each; stops early if fn returns false.
 func ForEachProject(fn func(types.CradleProject) bool) {
 	for _, project := range instance.projects {
 		if !fn(project) {
@@ -107,6 +111,7 @@ func ForEachProject(fn func(types.CradleProject) bool) {
 	}
 }
 
+// FindProject returns first project matching query by path or unique name.
 func FindProject(query string) (types.CradleProject, bool) {
 	for _, project := range instance.projects {
 		if project.MatchPathOrName(query) {
@@ -149,7 +154,7 @@ func save() error {
 
 	fileBytes = append([]byte(CradleConfigFileHeader+"\n\n"), fileBytes...)
 
-	return os.WriteFile(instance.CradleConfigFilePath, fileBytes, 0666)
+	return os.WriteFile(instance.CradleConfigFilePath, fileBytes, 0o666)
 }
 
 // getCradleHomeDir resolves the cradle home directory from the environment or returns the default.
