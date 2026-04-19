@@ -49,11 +49,13 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	nonSelectedTitle := lipgloss.NewStyle().
 		Bold(true).
 		Width(m.Width()).
+		Faint(true).
 		Foreground(lipgloss.AdaptiveColor{
 			Light: "0",
-			Dark:  "209",
+			Dark:  "#ff7300",
 		})
-	selectedTitle := nonSelectedTitle.Bold(true)
+	selectedTitle := nonSelectedTitle.Bold(true).
+		Faint(false)
 	// ============================
 
 	// Style for the title
