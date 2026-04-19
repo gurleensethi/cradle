@@ -43,19 +43,26 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 		return
 	}
 
-	// Style for the title
-	titleStyle := lipgloss.NewStyle().
+	isSelectedItem := index == m.Index()
+
+	// ========== Styles ==========
+	nonSelectedTitle := lipgloss.NewStyle().
 		Bold(true).
 		Width(m.Width()).
 		Foreground(lipgloss.AdaptiveColor{
 			Light: "0",
 			Dark:  "209",
 		})
+	selectedTitle := nonSelectedTitle.Bold(true)
+	// ============================
+
+	// Style for the title
+	titleStyle := nonSelectedTitle
 
 	// Base style for each item
 	style := lipgloss.NewStyle().
 		Width(m.Width()-3).
-		Margin(0, 1, 1, 1).
+		Margin(0, 1, 0, 1).
 		PaddingLeft(1).
 		PaddingRight(1)
 
@@ -66,7 +73,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 			Dark:  "#FFFF00",
 		})
 
-	if index == m.Index() {
+	if isSelectedItem {
 		style = style.
 			Background(lipgloss.AdaptiveColor{
 				Light: "#D3D3D3",
@@ -78,7 +85,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 				Dark:  "209",
 			})
 
-		titleStyle = titleStyle.Bold(true)
+		titleStyle = selectedTitle
 	} else {
 		style = style.
 			Foreground(lipgloss.AdaptiveColor{
