@@ -146,8 +146,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		c.Height = msg.Height
 		c.Width = msg.Width
-		c.ProjectList.SetHeight(msg.Height - 3)
-		c.ProjectList.SetWidth(msg.Width)
+		c.ProjectList.SetSize(msg.Width, msg.Height-3)
 	case tea.KeyMsg:
 		if c.ProjectList.FilterState() == list.Filtering {
 			break
