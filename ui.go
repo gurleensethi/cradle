@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -125,11 +126,18 @@ func NewCradleUIModel() CradleUIModel {
 
 	projectList := list.New(listItems, ProjectListDelegate{}, 0, 0)
 	projectList.SetShowTitle(false)
+	projectList.SetShowHelp(false)
 	projectList.FilterInput.Prompt = "Search: "
 	projectList.FilterInput.PromptStyle = lipgloss.NewStyle()
 
+	var selectedProjectPath string
+	if len(config.Projects()) > 0 {
+		selectedProjectPath = config.Projects()[0].Path
+	}
+
 	return CradleUIModel{
-		ProjectList: projectList,
+		ProjectList:         projectList,
+		SelectedProjectPath: selectedProjectPath,
 	}
 }
 
@@ -173,24 +181,40 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (c CradleUIModel) Title() string {
 	return lipgloss.NewStyle().
-		Width(c.Width).
+		Padding(0, 1, 0, 1).
 		MarginBottom(1).
 		Bold(true).
-		Align(lipgloss.Center).
+		Align(lipgloss.Left).
 		Background(lipgloss.Color("#ff7300")).
 		Foreground(lipgloss.Color("#FFFFFF")).
 		Render("cradle")
+}
+
+func (c CradleUIModel) ItemList() string {
+	strBuilder := strings.Builder{}
+
+	for _, project := range config.Projects() {
+		prefix := " "
+		if c.SelectedProjectPath == project.Path {
+			prefix = ">"
+		}
+
+		strBuilder.WriteString(prefix + project.UniqueNameFromPath + " " + "\n")
+	}
+
+	return strBuilder.String()
 }
 
 func (c CradleUIModel) View() string {
 	return lipgloss.NewStyle().
 		Width(c.Width).
 		Render(
-			lipgloss.JoinVertical(lipgloss.Center,
+			lipgloss.JoinVertical(lipgloss.Left,
 				c.Title(),
+				c.ItemList(),
 				lipgloss.NewStyle().
 					Render(
-						c.ProjectList.View(),
+					// c.ProjectList.View(),
 					),
 			),
 		)
