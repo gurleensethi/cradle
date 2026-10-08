@@ -5,9 +5,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	"github.com/gurleensethi/cradle/internal/config"
 	"github.com/gurleensethi/cradle/internal/types"
 )
@@ -51,9 +52,9 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 		Bold(true).
 		Width(m.Width()).
 		Faint(true).
-		Foreground(lipgloss.AdaptiveColor{
-			Light: "0",
-			Dark:  "#ff7300",
+		Foreground(compat.AdaptiveColor{
+			Light: lipgloss.Color("0"),
+			Dark:  lipgloss.Color("#ff7300"),
 		})
 	selectedTitle := nonSelectedTitle.Bold(true).
 		Faint(false)
@@ -71,29 +72,29 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 
 	// Style for temporary project indicator
 	tempStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{
-			Light: "#FFFF00",
-			Dark:  "#FFFF00",
+		Foreground(compat.AdaptiveColor{
+			Light: lipgloss.Color("#FFFF00"),
+			Dark:  lipgloss.Color("#FFFF00"),
 		})
 
 	if isSelectedItem {
 		style = style.
-			Background(lipgloss.AdaptiveColor{
-				Light: "#D3D3D3",
-				Dark:  "#484848",
+			Background(compat.AdaptiveColor{
+				Light: lipgloss.Color("#D3D3D3"),
+				Dark:  lipgloss.Color("#484848"),
 			}).
 			Border(lipgloss.NormalBorder(), false, false, false, true).
-			BorderForeground(lipgloss.AdaptiveColor{
-				Light: "209",
-				Dark:  "209",
+			BorderForeground(compat.AdaptiveColor{
+				Light: lipgloss.Color("209"),
+				Dark:  lipgloss.Color("209"),
 			})
 
 		titleStyle = selectedTitle
 	} else {
 		style = style.
-			Foreground(lipgloss.AdaptiveColor{
-				Light: "240",
-				Dark:  "250",
+			Foreground(compat.AdaptiveColor{
+				Light: lipgloss.Color("240"),
+				Dark:  lipgloss.Color("250"),
 			}).
 			PaddingLeft(2)
 	}
@@ -128,7 +129,11 @@ func NewCradleUIModel() CradleUIModel {
 	projectList.SetShowTitle(false)
 	projectList.SetShowHelp(false)
 	projectList.FilterInput.Prompt = "Search: "
-	projectList.FilterInput.PromptStyle = lipgloss.NewStyle()
+
+	filterStyles := projectList.FilterInput.Styles()
+	filterStyles.Focused.Prompt = lipgloss.NewStyle()
+	filterStyles.Blurred.Prompt = lipgloss.NewStyle()
+	projectList.FilterInput.SetStyles(filterStyles)
 
 	var selectedProjectPath string
 	if len(config.Projects()) > 0 {
@@ -155,7 +160,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c.Height = msg.Height
 		c.Width = msg.Width
 		c.ProjectList.SetSize(msg.Width, msg.Height-3)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if c.ProjectList.FilterState() == list.Filtering {
 			break
 		}
@@ -193,9 +198,12 @@ func (c CradleUIModel) Title() string {
 func (c CradleUIModel) ItemList() string {
 	strBuilder := strings.Builder{}
 
+	// Marker follows the list cursor so arrow keys visibly move the selection.
+	cursorItem, _ := c.ProjectList.SelectedItem().(ProjectListItem)
+
 	for _, project := range config.Projects() {
 		prefix := " "
-		if c.SelectedProjectPath == project.Path {
+		if project.Path == cursorItem.Project.Path {
 			prefix = ">"
 		}
 
@@ -205,17 +213,23 @@ func (c CradleUIModel) ItemList() string {
 	return strBuilder.String()
 }
 
-func (c CradleUIModel) View() string {
-	return lipgloss.NewStyle().
-		Width(c.Width).
-		Render(
-			lipgloss.JoinVertical(lipgloss.Left,
-				c.Title(),
-				c.ItemList(),
-				lipgloss.NewStyle().
-					Render(
-					// c.ProjectList.View(),
-					),
+func (c CradleUIModel) View() tea.View {
+	view := tea.NewView(
+		lipgloss.NewStyle().
+			Width(c.Width).
+			Render(
+				lipgloss.JoinVertical(lipgloss.Left,
+					c.Title(),
+					c.ItemList(),
+					lipgloss.NewStyle().
+						Render(
+						// c.ProjectList.View(),
+						),
+				),
 			),
-		)
+	)
+
+	view.AltScreen = true
+
+	return view
 }

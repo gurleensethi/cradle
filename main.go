@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/gurleensethi/cradle/command"
 	"github.com/gurleensethi/cradle/internal/config"
 	"github.com/gurleensethi/cradle/internal/template"
@@ -32,7 +32,7 @@ func main() {
 				return cli.ShowRootCommandHelp(c.Root())
 			}
 
-			program := tea.NewProgram(NewCradleUIModel(), tea.WithAltScreen())
+			program := tea.NewProgram(NewCradleUIModel())
 			model, err := program.Run()
 			if model, ok := model.(CradleUIModel); ok {
 				if model.SelectedProjectPath != "" && config.Get().CradleCommandOut {
