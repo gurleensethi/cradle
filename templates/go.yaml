@@ -4,13 +4,13 @@ description: Template for a basic Go project
 
 inputs:
   - name: GoVersion
-    default: 1.26
+    default: "1.26"
     required: true
-    description: Specify the Go version for the project.
+    description: Specify the Go version for the project (e.g. 1.26 or 1.26.0).
     type: string
     validate:
-        message: must be a valid number.
-        min: 1
+        pattern: "^\\d+\\.\\d+(\\.\\d+)?$"
+        message: must be a valid Go version (e.g. 1.26 or 1.26.0).
 
   - name: ModuleName
     description: The module name for the Go project (e.g., github.com/username/projectname).

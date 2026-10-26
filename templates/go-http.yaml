@@ -4,13 +4,13 @@ description: Setup a basic go http server
 
 inputs:
   - name: GoVersion
-    default: 1.25
+    default: "1.26"
     required: true
-    description: Specify the Go version for the project.
-    type: float
+    description: Specify the Go version for the project (e.g. 1.26 or 1.26.0).
+    type: string
     validate:
-        message: must be a valid number.
-        min: 1
+        pattern: "^\\d+\\.\\d+(\\.\\d+)?$"
+        message: must be a valid Go version (e.g. 1.26 or 1.26.0).
 
   - name: ModuleName
     description: The module name for the Go project (e.g., github.com/username/projectname).
@@ -40,6 +40,7 @@ files:
 
         import (
             "fmt"
+            "log"
             "net/http"
         )
 
@@ -47,15 +48,24 @@ files:
             mux := http.NewServeMux()
 
             mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+                w.Header().Set("Content-Type", "text/plain; charset=utf-8")
                 w.WriteHeader(http.StatusOK)
-                w.Write([]byte("Hello from go!"))
+                _, _ = w.Write([]byte("Hello, World!"))
+            })
+
+            mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+                w.Header().Set("Content-Type", "application/json")
+                w.WriteHeader(http.StatusOK)
+                _, _ = w.Write([]byte(`{"status":"ok"}`))
             })
 
             addr := ":{{.Port}}"
 
             fmt.Printf("listening on %s...\n", addr)
 
-            http.ListenAndServe(addr, mux)
+            if err := http.ListenAndServe(addr, mux); err != nil {
+                log.Fatalf("server error: %v", err)
+            }
         }
 
     README.md: |
