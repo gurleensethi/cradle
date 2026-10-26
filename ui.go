@@ -60,11 +60,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 			Light: lipgloss.Color("0"),
 			Dark:  lipgloss.Color("#FFFFFF"),
 		})
-	selectedTitle := nonSelectedTitle.
-		Foreground(compat.AdaptiveColor{
-			Light: lipgloss.Color("0"),
-			Dark:  lipgloss.Color("#ff7300"),
-		})
+	selectedTitle := nonSelectedTitle.Bold(true)
 	subTitle := lipgloss.NewStyle().Faint(true)
 	// ============================
 
@@ -81,20 +77,20 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	// Style for temporary project indicator
 	tempStyle := lipgloss.NewStyle().
 		Foreground(compat.AdaptiveColor{
-			Light: lipgloss.Color("#FFFF00"),
-			Dark:  lipgloss.Color("#FFFF00"),
+			Light: lipgloss.Color("#B8860B"),
+			Dark:  lipgloss.Color("#FFD700"),
 		})
 
 	if isSelectedItem {
 		style = style.
 			Background(compat.AdaptiveColor{
-				Light: lipgloss.Color("#D3D3D3"),
-				Dark:  lipgloss.Color("#484848"),
+				Light: lipgloss.Color("#E5E5E5"),
+				Dark:  lipgloss.Color("#2A2A2A"),
 			}).
 			Border(lipgloss.NormalBorder(), false, false, false, true).
 			BorderForeground(compat.AdaptiveColor{
-				Light: lipgloss.Color("209"),
-				Dark:  lipgloss.Color("209"),
+				Light: lipgloss.Color("#808080"),
+				Dark:  lipgloss.Color("#808080"),
 			})
 
 		titleStyle = selectedTitle
@@ -204,7 +200,7 @@ func (c CradleUIModel) Header() string {
 		Bold(true).
 		Width(c.Width).
 		Align(lipgloss.Center).
-		Background(lipgloss.Color("#ff7300")).
+		Background(lipgloss.Color("#2D2D2D")).
 		Foreground(lipgloss.Color("#FFFFFF")).
 		Render("cradle")
 }
@@ -216,7 +212,7 @@ func (c CradleUIModel) Footer() string {
 		Bold(true).
 		Width(c.Width).
 		Align(lipgloss.Center).
-		Background(lipgloss.Color("#ff7300")).
+		Background(lipgloss.Color("#2D2D2D")).
 		Foreground(lipgloss.Color("#FFFFFF")).
 		Render("")
 }
