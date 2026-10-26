@@ -32,7 +32,7 @@ func (p ProjectListItem) Description() string { return p.Project.Path }
 
 // FilterValue returns the text matched against when filtering projects.
 func (p ProjectListItem) FilterValue() string {
-	return p.Project.UniqueNameFromPath + " " + p.Project.Path
+	return p.Project.UniqueNameFromPath
 }
 
 type ProjectListDelegate struct{}
