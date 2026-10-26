@@ -4,10 +4,10 @@ description: Template for a basic Go project
 
 inputs:
   - name: GoVersion
-    default: 1.25
+    default: 1.26
     required: true
     description: Specify the Go version for the project.
-    type: float
+    type: string
     validate:
         message: must be a valid number.
         min: 1
