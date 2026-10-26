@@ -134,6 +134,7 @@ func NewCradleUIModel() CradleUIModel {
 	projectList := list.New(listItems, ProjectListDelegate{}, 0, 0)
 	projectList.SetShowTitle(false)
 	projectList.SetShowHelp(false)
+	projectList.SetShowStatusBar(false)
 	projectList.FilterInput.Prompt = "Search: "
 
 	filterStyles := projectList.FilterInput.Styles()
@@ -207,14 +208,19 @@ func (c CradleUIModel) Header() string {
 
 // Footer renders the bottom bar.
 func (c CradleUIModel) Footer() string {
+	textStyle := lipgloss.NewStyle().Faint(true)
+
 	return lipgloss.NewStyle().
 		MarginTop(1).
+		Padding(0, 2).
 		Bold(true).
 		Width(c.Width).
-		Align(lipgloss.Center).
+		Align(lipgloss.Left).
 		Background(lipgloss.Color("#2D2D2D")).
 		Foreground(lipgloss.Color("#FFFFFF")).
-		Render("")
+		Render(
+			textStyle.Render(fmt.Sprintf("%d projects", len(config.Projects()))),
+		)
 }
 
 // View renders the full TUI.
