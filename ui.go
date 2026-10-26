@@ -54,17 +54,18 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 
 	// ========== Styles ==========
 	nonSelectedTitle := lipgloss.NewStyle().
-		Bold(true).
+		Bold(false).
 		Width(m.Width()).
-		Foreground(compat.AdaptiveColor{
-			Light: lipgloss.Color("240"),
-			Dark:  lipgloss.Color("#a0a0a0"),
-		})
-	selectedTitle := nonSelectedTitle.Bold(true).
 		Foreground(compat.AdaptiveColor{
 			Light: lipgloss.Color("0"),
 			Dark:  lipgloss.Color("#FFFFFF"),
 		})
+	selectedTitle := nonSelectedTitle.
+		Foreground(compat.AdaptiveColor{
+			Light: lipgloss.Color("0"),
+			Dark:  lipgloss.Color("#ff7300"),
+		})
+	subTitle := lipgloss.NewStyle().Faint(true)
 	// ============================
 
 	// Style for the title
@@ -100,8 +101,8 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	} else {
 		style = style.
 			Foreground(compat.AdaptiveColor{
-				Light: lipgloss.Color("240"),
-				Dark:  lipgloss.Color("250"),
+				Light: lipgloss.Color("0"),
+				Dark:  lipgloss.Color("#FFFFFF"),
 			}).
 			PaddingLeft(2)
 	}
@@ -114,7 +115,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 
 	str := lipgloss.JoinVertical(lipgloss.Left,
 		title,
-		projectItem.Project.GetPathWithTruncatedHome(),
+		subTitle.Render(projectItem.Project.GetPathWithTruncatedHome()),
 	)
 
 	fmt.Fprint(w, style.Render(str))
