@@ -24,20 +24,26 @@ type ProjectListItem struct {
 	Project types.CradleProject
 }
 
+// Title returns the project's unique name for display in the list.
 func (p ProjectListItem) Title() string { return p.Project.UniqueNameFromPath }
 
+// Description returns the project's full path shown beneath its title.
 func (p ProjectListItem) Description() string { return p.Project.Path }
 
+// FilterValue returns the text matched against when filtering projects.
 func (p ProjectListItem) FilterValue() string {
 	return p.Project.UniqueNameFromPath + " " + p.Project.Path
 }
 
 type ProjectListDelegate struct{}
 
-func (p ProjectListDelegate) Height() int { return 3 }
+// Height returns the number of terminal lines a single list item occupies.
+func (p ProjectListDelegate) Height() int { return 2 }
 
+// Spacing returns the number of blank lines between list items.
 func (p ProjectListDelegate) Spacing() int { return 0 }
 
+// Render draws a single project item in the list.
 func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	projectItem, ok := item.(ProjectListItem)
 	if !ok {
@@ -50,6 +56,7 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	nonSelectedTitle := lipgloss.NewStyle().
 		Bold(true).
 		Width(m.Width()).
+		Faint(true).
 		Foreground(compat.AdaptiveColor{
 			Light: lipgloss.Color("0"),
 			Dark:  lipgloss.Color("#ff7300"),
@@ -112,11 +119,13 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 }
 
 // Update performs no custom updates.
+// Update handles item-level updates (none for this delegate).
 func (p ProjectListDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
 // NewCradleUIModel returns a new TUI model populated with projects.
+// NewCradleUIModel builds the TUI model populated with configured projects.
 func NewCradleUIModel() CradleUIModel {
 	var listItems []list.Item
 	for _, project := range config.Projects() {
@@ -144,11 +153,13 @@ func NewCradleUIModel() CradleUIModel {
 	}
 }
 
+// Init returns the initial command (none).
 func (c CradleUIModel) Init() tea.Cmd {
 	return nil
 }
 
 // Update handles TUI events and returns the updated model.
+// Update processes TUI messages and updates the model.
 func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
@@ -182,6 +193,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
+// Header renders the top title bar.
 func (c CradleUIModel) Header() string {
 	return lipgloss.NewStyle().
 		Padding(1).
@@ -194,6 +206,7 @@ func (c CradleUIModel) Header() string {
 		Render("cradle")
 }
 
+// Footer renders the bottom bar.
 func (c CradleUIModel) Footer() string {
 	return lipgloss.NewStyle().
 		MarginTop(1).
@@ -205,6 +218,7 @@ func (c CradleUIModel) Footer() string {
 		Render("")
 }
 
+// View renders the full TUI.
 func (c CradleUIModel) View() tea.View {
 	view := tea.NewView(
 		lipgloss.NewStyle().
