@@ -144,7 +144,7 @@ func PermanentProjects() []types.CradleProject {
 // save writes the sorted configuration to the YAML config file.
 func save() error {
 	slices.SortFunc(instance.projects, func(a, b types.CradleProject) int {
-		return strings.Compare(a.Path, b.Path)
+		return strings.Compare(a.UniqueNameFromPath, b.UniqueNameFromPath)
 	})
 
 	fileBytes, err := yaml.Marshal(cradleConfig{Projects: instance.projects})
@@ -234,7 +234,7 @@ func parseCradleConfigFile(configFilePath string) ([]types.CradleProject, error)
 	}
 
 	slices.SortFunc(cradleConfig.Projects, func(a, b types.CradleProject) int {
-		return strings.Compare(a.Path, b.Path)
+		return strings.Compare(a.UniqueNameFromPath, b.UniqueNameFromPath)
 	})
 
 	nameLookup := make(map[string]struct{})

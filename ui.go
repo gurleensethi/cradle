@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
@@ -51,7 +50,6 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	nonSelectedTitle := lipgloss.NewStyle().
 		Bold(true).
 		Width(m.Width()).
-		Faint(true).
 		Foreground(compat.AdaptiveColor{
 			Light: lipgloss.Color("0"),
 			Dark:  lipgloss.Color("#ff7300"),
@@ -159,7 +157,7 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		c.Height = msg.Height
 		c.Width = msg.Width
-		c.ProjectList.SetSize(msg.Width, msg.Height-3)
+		c.ProjectList.SetSize(msg.Width, msg.Height-6)
 	case tea.KeyPressMsg:
 		if c.ProjectList.FilterState() == list.Filtering {
 			break
@@ -184,33 +182,27 @@ func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-func (c CradleUIModel) Title() string {
+func (c CradleUIModel) Header() string {
 	return lipgloss.NewStyle().
-		Padding(0, 1, 0, 1).
+		Padding(1).
 		MarginBottom(1).
 		Bold(true).
-		Align(lipgloss.Left).
+		Width(c.Width).
+		Align(lipgloss.Center).
 		Background(lipgloss.Color("#ff7300")).
 		Foreground(lipgloss.Color("#FFFFFF")).
 		Render("cradle")
 }
 
-func (c CradleUIModel) ItemList() string {
-	strBuilder := strings.Builder{}
-
-	// Marker follows the list cursor so arrow keys visibly move the selection.
-	cursorItem, _ := c.ProjectList.SelectedItem().(ProjectListItem)
-
-	for _, project := range config.Projects() {
-		prefix := " "
-		if project.Path == cursorItem.Project.Path {
-			prefix = ">"
-		}
-
-		strBuilder.WriteString(prefix + project.UniqueNameFromPath + " " + "\n")
-	}
-
-	return strBuilder.String()
+func (c CradleUIModel) Footer() string {
+	return lipgloss.NewStyle().
+		MarginTop(1).
+		Bold(true).
+		Width(c.Width).
+		Align(lipgloss.Center).
+		Background(lipgloss.Color("#ff7300")).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Render("")
 }
 
 func (c CradleUIModel) View() tea.View {
@@ -219,12 +211,12 @@ func (c CradleUIModel) View() tea.View {
 			Width(c.Width).
 			Render(
 				lipgloss.JoinVertical(lipgloss.Left,
-					c.Title(),
-					c.ItemList(),
+					c.Header(),
 					lipgloss.NewStyle().
 						Render(
-						// c.ProjectList.View(),
+							c.ProjectList.View(),
 						),
+					c.Footer(),
 				),
 			),
 	)
