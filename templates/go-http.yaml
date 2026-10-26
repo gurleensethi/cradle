@@ -18,7 +18,7 @@ inputs:
     type: string
     validate:
         pattern: "^[a-zA-Z0-9_~.-]+(/[a-zA-Z0-9_~.-]+)*$"
-        message: Module name must be a valid.
+        message: Module name must be valid.
 
   - name: Port
     description: Port at which http server will listen and serve requests

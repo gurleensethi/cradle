@@ -38,34 +38,34 @@ type TemplateInputValidation struct {
 	Max     *float64 `yaml:"max,omitempty"`
 }
 
-func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
+func (tiv *TemplateInputValidation) Validate(inputType, input string) (string, bool) {
 	if inputType == "float" {
 		numValue, err := strconv.ParseFloat(input, 64)
 		if err != nil {
-			return "must be a valid number (float)"
+			return "must be a valid number (float)", false
 		}
 
 		if tiv.Min != nil && float64(numValue) < *tiv.Min {
-			return fmt.Sprintf("number must be greater than %v", *tiv.Min)
+			return fmt.Sprintf("number must be greater than %v", *tiv.Min), false
 		}
 
 		if tiv.Max != nil && float64(numValue) > *tiv.Max {
-			return fmt.Sprintf("number must be less than %v", *tiv.Max)
+			return fmt.Sprintf("number must be less than %v", *tiv.Max), false
 		}
 	}
 
 	if inputType == "int" {
 		numValue, err := strconv.Atoi(input)
 		if err != nil {
-			return "must be a valid number (integer)"
+			return "must be a valid number (integer)", false
 		}
 
 		if tiv.Min != nil && numValue < int(*tiv.Min) {
-			return fmt.Sprintf("number must be greater than %v", *tiv.Min)
+			return fmt.Sprintf("number must be greater than %v", *tiv.Min), false
 		}
 
 		if tiv.Max != nil && numValue > int(*tiv.Max) {
-			return fmt.Sprintf("number must be less than %v", *tiv.Max)
+			return fmt.Sprintf("number must be less than %v", *tiv.Max), false
 		}
 	}
 
@@ -73,28 +73,28 @@ func (tiv *TemplateInputValidation) Validate(inputType, input string) string {
 		if tiv.Pattern != "" {
 			regex, err := regexp.Compile(tiv.Pattern)
 			if err != nil {
-				return fmt.Sprintf("invalid regex: %v %v", err, tiv.Pattern)
+				return fmt.Sprintf("invalid regex: %v %v", err, tiv.Pattern), false
 			}
 
 			if !regex.MatchString(input) {
-				return fmt.Sprintf("should match pattern `%s`", tiv.Pattern)
+				return fmt.Sprintf("should match pattern `%s`", tiv.Pattern), false
 			}
 		}
 
 		if tiv.MinLen != nil {
 			if len(input) < *tiv.MinLen {
-				return fmt.Sprintf("need to be at least %d characters", *tiv.MinLen)
+				return fmt.Sprintf("need to be at least %d characters", *tiv.MinLen), false
 			}
 		}
 
 		if tiv.MaxLen != nil {
 			if len(input) > *tiv.MaxLen {
-				return fmt.Sprintf("cannot be longer than %d characters", *tiv.MaxLen)
+				return fmt.Sprintf("cannot be longer than %d characters", *tiv.MaxLen), false
 			}
 		}
 	}
 
-	return ""
+	return "", true
 }
 
 // TemplateInput defines a user input field for a template.
@@ -202,8 +202,13 @@ func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 						return errors.New(input.Name + " is required")
 					}
 				} else {
-					validationMessage := input.Validate.Validate(input.Type, s)
-					if validationMessage != "" {
+					validationMessage, isValid := input.Validate.Validate(input.Type, s)
+					if !isValid {
+						// Use predefined validation message
+						if input.Validate.Message != "" {
+							validationMessage = input.Validate.Message
+						}
+
 						return errors.New(input.Name + " " + validationMessage)
 					}
 				}
