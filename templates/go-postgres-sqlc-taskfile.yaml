@@ -59,6 +59,15 @@ inputs:
         min: 1
         max: 65535
 
+  - name: PostgresVersion
+    default: "18"
+    required: true
+    description: Postgres version for the Docker image.
+    type: string
+    validate:
+        pattern: "^\\d+(\\.\\d+)?$"
+        message: must be a valid Postgres version (e.g. 18 or 18.1).
+
 files:
     go.mod: |
         module {{.ModuleName}}
@@ -158,7 +167,7 @@ files:
     docker-compose.yml: |
         services:
           postgres:
-            image: postgres:16
+            image: postgres:{{.PostgresVersion}}
             environment:
               POSTGRES_USER: {{.DBUser}}
               POSTGRES_PASSWORD: {{.DBPassword}}
