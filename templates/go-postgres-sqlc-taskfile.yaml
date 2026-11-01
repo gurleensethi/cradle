@@ -1,0 +1,261 @@
+version: v1
+name: Go Postgres SQLC (Taskfile)
+description: Go service with Postgres and sqlc-generated type-safe queries, using Taskfile
+
+inputs:
+  - name: GoVersion
+    default: "1.26"
+    required: true
+    description: Specify the Go version for the project (e.g. 1.26 or 1.26.0).
+    type: string
+    validate:
+        pattern: "^\\d+\\.\\d+(\\.\\d+)?$"
+        message: must be a valid Go version (e.g. 1.26 or 1.26.0).
+
+  - name: ModuleName
+    description: The module name for the Go project (e.g., github.com/username/projectname).
+    required: true
+    type: string
+    validate:
+        pattern: "^[a-zA-Z0-9_~.-]+(/[a-zA-Z0-9_~.-]+)*$"
+        message: Module name must be valid.
+
+  - name: DBName
+    default: "appdb"
+    required: true
+    description: Postgres database name.
+    type: string
+    validate:
+        pattern: "^[a-zA-Z0-9_]+$"
+        message: Database name must contain only letters, numbers, and underscores.
+
+  - name: DBUser
+    default: "appuser"
+    required: true
+    description: Postgres username.
+    type: string
+    validate:
+        pattern: "^[a-zA-Z0-9_]+$"
+        message: Username must contain only letters, numbers, and underscores.
+
+  - name: DBPassword
+    default: "apppassword"
+    required: true
+    description: Postgres password.
+    type: string
+
+  - name: DBHost
+    default: "localhost"
+    required: true
+    description: Postgres host.
+    type: string
+
+  - name: DBPort
+    default: 5432
+    required: true
+    description: Postgres port.
+    type: int
+    validate:
+        min: 1
+        max: 65535
+
+files:
+    go.mod: |
+        module {{.ModuleName}}
+
+        go {{.GoVersion}}
+
+        require (
+            github.com/jackc/pgx/v5 v5.7.4
+        )
+
+    sqlc.yaml: |
+        version: "2"
+        sql:
+          - engine: "postgresql"
+            queries: "db/queries"
+            schema: "db/schema.sql"
+            gen:
+              go:
+                package: "db"
+                out: "internal/db"
+                sql_package: "pgx/v5"
+
+    db/schema.sql: |
+        CREATE TABLE IF NOT EXISTS users (
+            id         BIGSERIAL PRIMARY KEY,
+            name       TEXT NOT NULL,
+            email      TEXT NOT NULL UNIQUE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+
+    db/queries/users.sql: |
+        -- name: CreateUser :one
+        INSERT INTO users (name, email)
+        VALUES ($1, $2)
+        RETURNING id, name, email, created_at;
+
+        -- name: GetUser :one
+        SELECT id, name, email, created_at
+        FROM users
+        WHERE id = $1;
+
+        -- name: ListUsers :many
+        SELECT id, name, email, created_at
+        FROM users
+        ORDER BY id;
+
+    main.go: |
+        package main
+
+        import (
+            "context"
+            "fmt"
+            "log"
+            "os"
+
+            "github.com/jackc/pgx/v5/pgxpool"
+
+            db "{{.ModuleName}}/internal/db"
+        )
+
+        func main() {
+            ctx := context.Background()
+
+            databaseURL := os.Getenv("DATABASE_URL")
+            if databaseURL == "" {
+                databaseURL = "postgres://{{.DBUser}}:{{.DBPassword}}@{{.DBHost}}:{{.DBPort}}/{{.DBName}}?sslmode=disable"
+            }
+
+            pool, err := pgxpool.New(ctx, databaseURL)
+            if err != nil {
+                log.Fatalf("unable to connect to database: %v", err)
+            }
+            defer pool.Close()
+
+            if err := pool.Ping(ctx); err != nil {
+                log.Fatalf("unable to ping database: %v", err)
+            }
+
+            queries := db.New(pool)
+
+            user, err := queries.CreateUser(ctx, db.CreateUserParams{
+                Name:  "alice",
+                Email: "alice@example.com",
+            })
+            if err != nil {
+                log.Fatalf("create user: %v", err)
+            }
+            fmt.Printf("created user: %+v\n", user)
+
+            users, err := queries.ListUsers(ctx)
+            if err != nil {
+                log.Fatalf("list users: %v", err)
+            }
+            fmt.Printf("users: %+v\n", users)
+        }
+
+    docker-compose.yml: |
+        services:
+          postgres:
+            image: postgres:16
+            environment:
+              POSTGRES_USER: {{.DBUser}}
+              POSTGRES_PASSWORD: {{.DBPassword}}
+              POSTGRES_DB: {{.DBName}}
+            ports:
+              - "{{.DBPort}}:5432"
+            volumes:
+              - pgdata:/var/lib/postgresql/data
+        volumes:
+          pgdata:
+
+    Taskfile.yml: |
+        version: '3'
+
+        tasks:
+          up:
+            desc: Start Postgres
+            cmds:
+              - docker compose up -d
+
+          down:
+            desc: Stop Postgres
+            cmds:
+              - docker compose down
+
+          schema:
+            desc: Apply schema
+            cmds:
+              - psql "postgres://{{.DBUser}}:{{.DBPassword}}@{{.DBHost}}:{{.DBPort}}/{{.DBName}}?sslmode=disable" -f db/schema.sql
+
+          sqlc:
+            desc: Generate sqlc code
+            cmds:
+              - sqlc generate
+
+          run:
+            desc: Run the app
+            cmds:
+              - go run .
+
+    .gitignore: |
+        # Binaries
+        *.exe
+        *.dll
+        *.so
+        *.dylib
+        *.test
+        *.out
+
+        # Go module cache
+        /vendor/
+
+        # Environment
+        .env
+
+        # Editor/IDE
+        .idea/
+        .vscode/
+        *.swp
+        *~
+
+        # OS
+        .DS_Store
+        Thumbs.db
+
+    README.md: |
+        # {{.ProjectName}}
+
+        Go service using Postgres and sqlc (Taskfile).
+
+        ## Prerequisites
+        - Go {{.GoVersion}}
+        - Docker (for Postgres)
+        - Task (`go install github.com/go-task/task/v3/cmd/task@latest`)
+        - sqlc (`go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`)
+        - psql (optional, for applying schema)
+
+        ## Run Postgres
+        ```bash
+        task up
+        ```
+
+        ## Apply schema
+        ```bash
+        task schema
+        ```
+
+        ## Generate sqlc code
+        ```bash
+        task sqlc
+        ```
+
+        ## Run the app
+        ```bash
+        task run
+        ```
+
+        ## Notes
+        - Generated code lives in `internal/db`.
+        - Add queries in `db/queries/*.sql` and re-run `task sqlc`.
