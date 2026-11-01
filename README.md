@@ -1,56 +1,84 @@
 # Cradle 🧺
 
-Cradle helps you manage your local projects.
+Cradle helps you manage your local projects from the terminal.
 
-## Installation
+[![Go version](https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Install using **Go**:
+<p align="center">
+  <img src="docs/vhs/gen/main.gif" alt="Cradle demo" width="100%" />
+</p>
 
-```bash
+## Why Cradle?
+
+- Keep all your projects in one place
+- Jump into any project instantly
+- Scaffold new projects from templates
+- Clean up temporary experiments
+- Keep your workspace healthy with `doctor`
+
+## Install
+
+```sh
 go install github.com/gurleensethi/cradle@latest
 ```
 
-## Shell Configuration
+## Shell setup (one-time)
 
-Add the helper function to your shell's configuration file:
+Add the helper so Cradle can switch directories for you:
 
-```bash
+```sh
 crdl() {
-    out=$(CRADLE_CMDOUT=1 cradle "$@" 3>&1 1>&2 2>&3)
-    if [[ $out == eval* ]]; then
-        eval "${out#eval}"
-    else
-        printf '%s' "$out"
-    fi
+  out=$(CRADLE_CMDOUT=1 cradle "$@" 3>&1 1>&2 2>&3)
+  if [[ $out == eval* ]]; then
+    eval "${out#eval}"
+  else
+    printf '%s' "$out"
+  fi
 }
 ```
 
-> **Note**: This configuration is required to enable directory switching functionality. Without it, you won't be able to change directories using Cradle.
+Then use `crdl` instead of `cradle`.
 
-### For Bash Users
+## Quick start
 
-To configure Cradle for Bash, append the helper script to your `.bashrc`:
-
-```bash
-curl -s https://raw.githubusercontent.com/gurleensethi/cradle/main/crdl.sh >> ~/.bashrc
+```sh
+crdl create my-app --template go
+crdl list
+crdl open my-app
 ```
 
-### For Zsh Users
+## Commands
 
-To configure Cradle for Zsh, append the helper script to your `.zshrc`:
+| Command | Description |
+|---|---|
+| `list` | List all managed projects |
+| `create` | Create a new project |
+| `add` | Register an existing project |
+| `remove` | Remove a project from Cradle |
+| `open` | Open a project |
+| `cleanup` | Remove temporary projects |
+| `doctor` | Check (and fix) workspace health |
+| `templates` | List available templates |
 
-```bash
-curl -s https://raw.githubusercontent.com/gurleensethi/cradle/main/crdl.sh >> ~/.zshrc
+## Templates
+
+```sh
+crdl templates list
+crdl create my-api --template go-http
 ```
 
-After adding the script, remember to restart your terminal or source the configuration file to apply the changes.
+Available: `go`, `go-http`, `go-postgres-sqlc`, `go-postgres-sqlc-taskfile`, `go-postgres-sqlc-mise`.
 
-## Usage
+## Configuration
 
-### Use with TUI.
+- `CRADLE_HOME` — where Cradle stores data (default `~/cradle`)
+- `CRADLE_CMDOUT` — enable directory switching output
 
-![](./docs/vhs/gen/main.gif)
+## Contributing
 
-### List projects
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-![](./docs/vhs/gen/list.gif)
+## License
+
+MIT
