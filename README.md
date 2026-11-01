@@ -8,7 +8,7 @@ Cradle helps you manage your local projects from the terminal.
 **Quickly jump from project to project ⚡️**
 
 <p align="center">
-  <img src="docs/vhs/gen/main.gif" alt="Cradle demo" width="100%" />
+  <img src="docs/vhs/gen/main-01-11-2026.gif" alt="Cradle demo" width="100%" />
 </p>
 
 ## Why Cradle?
