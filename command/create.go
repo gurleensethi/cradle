@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -95,7 +96,7 @@ func createProject(params createProjectParams) (string, error) {
 			return "", err
 		}
 
-		templateInput := map[string]string{
+		templateInput := map[string]any{
 			"ProjectName": params.Name,
 		}
 
@@ -123,14 +124,25 @@ func createProject(params createProjectParams) (string, error) {
 	// Create the project directory
 	err := os.Mkdir(newProjectPath, os.ModePerm)
 	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return "", fmt.Errorf("failed: '%s' directory already exists", newProjectPath)
+		}
 		return "", err
 	}
 
 	for filePath, fileContent := range files {
+		// Make sure the full directory path exists
+		directory := path.Join(newProjectPath, filepath.Dir(filePath))
+
+		err = os.MkdirAll(directory, os.ModePerm)
+		if err != nil {
+			return "", fmt.Errorf("failed to create directory '%s': %w", directory, err)
+		}
+
 		err := os.WriteFile(path.Join(newProjectPath, filePath), []byte(fileContent), 0o644)
 		if err != nil {
 			// TODO: return better error message, denoting which file failed to be created.
-			return "", err
+			return "", fmt.Errorf("failed to write to file '%s': %w", filePath, err)
 		}
 	}
 

@@ -63,10 +63,17 @@ inputs:
     default: "18"
     required: true
     description: Postgres version for the Docker image.
-    type: string
+    type: float
     validate:
-        pattern: "^\\d+(\\.\\d+)?$"
+        min: 1
+        max: 999
         message: must be a valid Postgres version (e.g. 18 or 18.1).
+
+  - name: PersistentDB
+    default: "false"
+    required: false
+    description: Mount a persistent volume for Postgres data.
+    type: bool
 
 files:
     go.mod: |
@@ -174,10 +181,18 @@ files:
               POSTGRES_DB: {{.DBName}}
             ports:
               - "{{.DBPort}}:5432"
+        {{- if .PersistentDB }}
             volumes:
+        {{- if ge .PostgresVersion 18.0 }}
+              - pgdata:/var/lib/postgresql/{{ printf "%.0f" .PostgresVersion }}/docker
+        {{- else }}
               - pgdata:/var/lib/postgresql/data
+        {{- end }}
+        {{- end }}
+        {{- if .PersistentDB }}
         volumes:
           pgdata:
+        {{- end }}
 
     .mise.toml: |
         [tools]

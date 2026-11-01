@@ -157,11 +157,32 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 	return &template, nil
 }
 
+// castInput converts a string value to the type declared by the template input.
+func castInput(inputType, value string) any {
+	switch inputType {
+	case "int":
+		if n, err := strconv.Atoi(value); err == nil {
+			return n
+		}
+	case "float":
+		if n, err := strconv.ParseFloat(value, 64); err == nil {
+			return n
+		}
+	case "bool":
+		if b, err := strconv.ParseBool(value); err == nil {
+			return b
+		}
+	}
+
+	return value
+}
+
 // ReadUserInputs collects validated input values from the user.
-func ReadUserInputs(td *TemplateData) (map[string]string, error) {
-	userInputs := make(map[string]string)
+// Values are cast to their declared type (int, float, or string) before being returned.
+func ReadUserInputs(td *TemplateData) (map[string]any, error) {
+	userInputs := make(map[string]any)
 	for _, input := range td.Inputs {
-		userInputs[input.Name] = input.Default
+		userInputs[input.Name] = nil
 	}
 
 	if len(td.Inputs) == 0 {
@@ -176,6 +197,9 @@ func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 	)
 
 	var fields []huh.Field
+	stringPtrs := make(map[string]*string)
+	boolPtrs := make(map[string]*bool)
+
 	for _, input := range td.Inputs {
 		title := input.Name
 		if input.Required {
@@ -187,48 +211,90 @@ func ReadUserInputs(td *TemplateData) (map[string]string, error) {
 			description += "\n(default: " + input.Default + ")"
 		}
 
-		field := huh.NewInput().
-			Title(title).
-			Description(description).
-			PlaceholderFunc(func() string {
-				return input.Default
-			}, nil).
-			Validate(func(s string) error {
-				if s == "" {
-					if input.Default != "" {
-						userInputs[input.Name] = input.Default
-						return nil
-					} else if input.Required {
-						return errors.New(input.Name + " is required")
+		switch input.Type {
+		case "bool":
+			b := false
+			if v, ok := castInput(input.Type, input.Default).(bool); ok {
+				b = v
+			}
+			ptr := &b
+			boolPtrs[input.Name] = ptr
+
+			field := huh.NewConfirm().
+				Title(title).
+				Description(description).
+				Value(ptr).
+				Validate(func(bb bool) error {
+					if !bb && input.Required {
+						// bool fields are optional by default; nothing to enforce
 					}
-				} else {
+					return nil
+				}).
+				Key(input.Name)
+
+			fields = append(fields, field)
+		default:
+			value := ""
+			ptr := &value
+			stringPtrs[input.Name] = ptr
+
+			field := huh.NewInput().
+				Title(title).
+				Description(description).
+				PlaceholderFunc(func() string {
+					return input.Default
+				}, nil).
+				Value(ptr).
+				Validate(func(s string) error {
+					if s == "" {
+						if input.Default != "" {
+							return nil
+						}
+						if input.Required {
+							return errors.New(input.Name + " is required")
+						}
+						return nil
+					}
+
 					validationMessage, isValid := input.Validate.Validate(input.Type, s)
 					if !isValid {
-						// Use predefined validation message
 						if input.Validate.Message != "" {
 							validationMessage = input.Validate.Message
 						}
-
 						return errors.New(input.Name + " " + validationMessage)
 					}
-				}
+					return nil
+				}).
+				Key(input.Name)
 
-				userInputs[input.Name] = s
-
-				return nil
-			}).
-			Key(input.Name)
-
-		fields = append(fields, field)
+			fields = append(fields, field)
+		}
 	}
 
 	form := huh.NewForm(
 		huh.NewGroup(fields...),
 	).WithProgramOptions(tea.WithOutput(os.Stdout))
 
-	err := form.Run()
-	if err != nil {
+	if err := form.Run(); err != nil {
 		return nil, err
+	}
+
+	// Sync bound values back into the result map, applying defaults for empty inputs.
+	for _, input := range td.Inputs {
+		switch input.Type {
+		case "bool":
+			if ptr, ok := boolPtrs[input.Name]; ok && ptr != nil {
+				userInputs[input.Name] = *ptr
+			}
+		default:
+			if ptr, ok := stringPtrs[input.Name]; ok && ptr != nil {
+				value := *ptr
+				if value == "" && input.Default != "" {
+					value = input.Default
+				}
+				userInputs[input.Name] = castInput(input.Type, value)
+			}
+		}
 	}
 
 	return userInputs, nil

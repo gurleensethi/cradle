@@ -6,6 +6,9 @@ Cradle is a Go-based CLI tool that helps developers manage their local projects 
 
 ## Project Conventions
 
+### Git
+- Do not make a commit unless user explicity states to do so.
+
 ### Golang Instructions
 - Follow idiomatic go, not idiotic go!
 - Every function should be documented properly and concisely with what it does
