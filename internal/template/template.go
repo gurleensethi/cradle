@@ -127,19 +127,19 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, ErrNotExists
 		}
-		return nil, err
+		return nil, fmt.Errorf("read template %q: %w", templateName, err)
 	}
 
 	var template TemplateData
 	if err := yaml.Unmarshal(data, &template); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse template %q: %w", templateName, err)
 	}
 
 	return &template, nil
 }
 
-// castInput converts a string value to the type declared by the template input.
-func castInput(inputType, value string) any {
+// parseInput converts a string value to the type declared by the template input.
+func parseInput(inputType, value string) any {
 	switch inputType {
 	case "int":
 		if n, err := strconv.Atoi(value); err == nil {
@@ -177,65 +177,10 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 			Render(td.Name + " - " + td.Description),
 	)
 
-	var fields []huh.Field
-	for _, in := range td.Inputs {
-		title := in.Name
-		if in.Required {
-			title += "*"
-		}
-
-		description := in.Description
-		if in.Default != "" {
-			description += "\n(default: " + in.Default + ")"
-		}
-
-		if in.Type == "bool" {
-			b := false
-			if v, ok := castInput(in.Type, in.Default).(bool); ok {
-				b = v
-			}
-			ptr := &b
-			fields = append(fields, huh.NewConfirm().
-				Title(title).
-				Description(description).
-				Value(ptr).
-				Key(in.Name))
-			continue
-		}
-
-		value := ""
-		ptr := &value
-		fields = append(fields, huh.NewInput().
-			Title(title).
-			Description(description).
-			Placeholder(in.Default).
-			Value(ptr).
-			Validate(func(s string) error {
-				if s == "" {
-					if in.Default != "" || !in.Required {
-						return nil
-					}
-					return errors.New(in.Name + " is required")
-				}
-
-				validationMessage, isValid := in.Validate.Validate(in.Type, s)
-				if !isValid {
-					if in.Validate.Message != "" {
-						validationMessage = in.Validate.Message
-					}
-					return errors.New(in.Name + " " + validationMessage)
-				}
-				return nil
-			}).
-			Key(in.Name))
-	}
-
-	form := huh.NewForm(
-		huh.NewGroup(fields...),
-	).WithProgramOptions(tea.WithOutput(os.Stdout))
+	form := BuildInputFormFromTemplate(td)
 
 	if err := form.Run(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read user inputs: %w", err)
 	}
 
 	for _, in := range td.Inputs {
@@ -247,9 +192,72 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 			if value == "" && in.Default != "" {
 				value = in.Default
 			}
-			userInputs[in.Name] = castInput(in.Type, value)
+			userInputs[in.Name] = parseInput(in.Type, value)
 		}
 	}
 
 	return userInputs, nil
+}
+
+func BuildInputFormFromTemplate(td *TemplateData) *huh.Form {
+	var fields []huh.Field
+
+	for _, in := range td.Inputs {
+		title := in.Name
+		if in.Required {
+			title += "*"
+		}
+
+		description := in.Description
+		if in.Default != "" {
+			description += "\n(default: " + in.Default + ")"
+		}
+
+		switch in.Type {
+		case "bool":
+			b := false
+			if v, ok := parseInput(in.Type, in.Default).(bool); ok {
+				b = v
+			}
+			ptr := &b
+			fields = append(fields, huh.NewConfirm().
+				Title(title).
+				Description(description).
+				Value(ptr).
+				Key(in.Name))
+			continue
+		default:
+			value := ""
+			ptr := &value
+			fields = append(fields, huh.NewInput().
+				Title(title).
+				Description(description).
+				Placeholder(in.Default).
+				Value(ptr).
+				Validate(func(s string) error {
+					if s == "" {
+						if in.Default != "" || !in.Required {
+							return nil
+						}
+						return errors.New(in.Name + " is required")
+					}
+
+					validationMessage, isValid := in.Validate.Validate(in.Type, s)
+					if !isValid {
+						if in.Validate.Message != "" {
+							validationMessage = in.Validate.Message
+						}
+						return errors.New(in.Name + " " + validationMessage)
+					}
+					return nil
+				}).
+				Key(in.Name))
+		}
+	}
+
+	form := huh.NewForm(
+		huh.NewGroup(fields...),
+	).WithProgramOptions(tea.WithOutput(os.Stdout))
+
+	return form
 }
