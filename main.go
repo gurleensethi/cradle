@@ -49,6 +49,7 @@ func main() {
 			command.Open(),
 			command.Cleanup(),
 			command.Doctor(),
+			command.Templates(),
 		},
 	}
 
