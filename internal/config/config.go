@@ -24,6 +24,7 @@ type cradleConfig struct {
 	Projects []types.CradleProject `yaml:"projects"`
 }
 
+// Config holds the runtime configuration for cradle.
 type Config struct {
 	CradleHomeDirPath    string
 	CradleConfigFilePath string
@@ -33,6 +34,7 @@ type Config struct {
 
 var instance Config
 
+// Get returns the current config instance.
 func Get() Config {
 	return instance
 }
@@ -73,6 +75,7 @@ func Init() error {
 	return nil
 }
 
+// Projects returns a copy of all registered projects.
 func Projects() []types.CradleProject {
 	projects := make([]types.CradleProject, len(instance.projects))
 	copy(projects, instance.projects)
@@ -121,6 +124,7 @@ func FindProject(query string) (types.CradleProject, bool) {
 	return types.CradleProject{}, false
 }
 
+// TemporaryProjects returns all projects marked as temporary.
 func TemporaryProjects() []types.CradleProject {
 	var temp []types.CradleProject
 	for _, project := range instance.projects {
@@ -131,6 +135,7 @@ func TemporaryProjects() []types.CradleProject {
 	return temp
 }
 
+// PermanentProjects returns all projects not marked as temporary.
 func PermanentProjects() []types.CradleProject {
 	var permanent []types.CradleProject
 	for _, project := range instance.projects {

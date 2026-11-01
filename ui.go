@@ -20,6 +20,7 @@ type CradleUIModel struct {
 	Height              int
 }
 
+// ProjectListItem wraps a CradleProject for display in the list.
 type ProjectListItem struct {
 	Project types.CradleProject
 }
@@ -35,6 +36,7 @@ func (p ProjectListItem) FilterValue() string {
 	return p.Project.UniqueNameFromPath
 }
 
+// ProjectListDelegate renders project items in the list.
 type ProjectListDelegate struct{}
 
 // Height returns the number of terminal lines a single list item occupies.
@@ -117,13 +119,11 @@ func (p ProjectListDelegate) Render(w io.Writer, m list.Model, index int, item l
 	fmt.Fprint(w, style.Render(str))
 }
 
-// Update performs no custom updates.
 // Update handles item-level updates (none for this delegate).
 func (p ProjectListDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
-// NewCradleUIModel returns a new TUI model populated with projects.
 // NewCradleUIModel builds the TUI model populated with configured projects.
 func NewCradleUIModel() CradleUIModel {
 	var listItems []list.Item
@@ -158,7 +158,6 @@ func (c CradleUIModel) Init() tea.Cmd {
 	return nil
 }
 
-// Update handles TUI events and returns the updated model.
 // Update processes TUI messages and updates the model.
 func (c CradleUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd

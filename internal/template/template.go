@@ -97,8 +97,10 @@ type TemplateInput struct {
 	Validate    TemplateInputValidation `yaml:"validate,omitempty"`
 }
 
+// TemplateFile holds the raw contents of a template file.
 type TemplateFile string
 
+// TemplateData represents a loaded project template.
 type TemplateData struct {
 	FileName    string                  `yaml:"-"`
 	Name        string                  `yaml:"name"`
@@ -107,6 +109,7 @@ type TemplateData struct {
 	Files       map[string]TemplateFile `yaml:"files"`
 }
 
+// Validate checks that the template has a name and at least one file.
 func (td *TemplateData) Validate() error {
 	if len(td.Name) == 0 {
 		return errors.New("template name cannot be empty")
