@@ -7,7 +7,9 @@ import (
 	"io/fs"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
@@ -98,6 +100,7 @@ type TemplateInput struct {
 type TemplateFile string
 
 type TemplateData struct {
+	FileName    string                  `yaml:"-"`
 	Name        string                  `yaml:"name"`
 	Description string                  `yaml:"description"`
 	Inputs      []TemplateInput         `yaml:"inputs"`
@@ -134,8 +137,47 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 	if err := yaml.Unmarshal(data, &template); err != nil {
 		return nil, fmt.Errorf("parse template %q: %w", templateName, err)
 	}
+	template.FileName = templateName
 
 	return &template, nil
+}
+
+// ListTemplates returns all available templates.
+func ListTemplates() ([]*TemplateData, error) {
+	if templateFS == nil {
+		return nil, errors.New("template.SetTemplateFS must be called before ListTemplates")
+	}
+
+	entries, err := fs.ReadDir(*templateFS, "templates")
+	if err != nil {
+		return nil, fmt.Errorf("list templates: %w", err)
+	}
+
+	var templates []*TemplateData
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+		templateName, ok := strings.CutSuffix(name, ".yaml")
+		if !ok {
+			continue
+		}
+
+		tmpl, err := GetTemplate(templateName)
+		if err != nil {
+			return nil, fmt.Errorf("load template %q: %w", templateName, err)
+		}
+
+		templates = append(templates, tmpl)
+	}
+
+	sort.Slice(templates, func(i, j int) bool {
+		return templates[i].FileName < templates[j].FileName
+	})
+
+	return templates, nil
 }
 
 // parseInput converts a string value to the type declared by the template input.
@@ -199,6 +241,23 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 	return userInputs, nil
 }
 
+// BuildInputFormFromTemplate builds a huh form for collecting the template's
+// user inputs. Fields are bound to local variables; their values are read
+// from the form after it is submitted.
+//
+// Example:
+//
+//	form := BuildInputFormFromTemplate(td)
+//	if err := form.Run(); err != nil {
+//	    return nil, err
+//	}
+//	for _, in := range td.Inputs {
+//	    if in.Type == "bool" {
+//	        value := form.GetBool(in.Name)
+//	    } else {
+//	        value := form.GetString(in.Name)
+//	    }
+//	}
 func BuildInputFormFromTemplate(td *TemplateData) *huh.Form {
 	var fields []huh.Field
 
