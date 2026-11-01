@@ -224,12 +224,6 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 				Title(title).
 				Description(description).
 				Value(ptr).
-				Validate(func(bb bool) error {
-					if !bb && input.Required {
-						// bool fields are optional by default; nothing to enforce
-					}
-					return nil
-				}).
 				Key(input.Name)
 
 			fields = append(fields, field)
