@@ -70,7 +70,7 @@ inputs:
         message: must be a valid Postgres version (e.g. 18 or 18.1).
 
   - name: PersistentDB
-    default: "false"
+    default: false
     required: false
     description: Mount a persistent volume for Postgres data.
     type: bool
