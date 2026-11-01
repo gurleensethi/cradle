@@ -5,6 +5,8 @@ Cradle helps you manage your local projects from the terminal.
 [![Go version](https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+**Quickly jump from project to project ⚡️**
+
 <p align="center">
   <img src="docs/vhs/gen/main.gif" alt="Cradle demo" width="100%" />
 </p>
