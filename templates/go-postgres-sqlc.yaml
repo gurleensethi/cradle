@@ -4,7 +4,7 @@ description: Go service with Postgres and sqlc-generated type-safe queries
 
 inputs:
   - name: GoVersion
-    default: "1.26"
+    default: "1.27"
     required: true
     description: Specify the Go version for the project (e.g. 1.26 or 1.26.0).
     type: string
