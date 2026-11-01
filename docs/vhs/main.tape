@@ -11,6 +11,8 @@ Sleep 500ms
 Down 1
 Sleep 250ms
 Down 1
+Sleep 250ms
+Down 1
 Sleep 750ms
 Enter
 
@@ -26,7 +28,8 @@ Type@100ms "crdl"
 Enter
 Sleep 500ms
 
-Type "go-playground"
+Type@100ms "/"
+Type@50ms "go-playground"
 Sleep 750ms
 Enter
 Sleep 250ms
