@@ -1,7 +1,6 @@
 package template
 
 import (
-	"bytes"
 	"embed"
 	"errors"
 	"fmt"
@@ -38,59 +37,48 @@ type TemplateInputValidation struct {
 	Max     *float64 `yaml:"max,omitempty"`
 }
 
+// Validate checks the given input against the configured rules for inputType.
+// It returns a human-readable error message and false when validation fails,
+// or an empty string and true when the input is valid.
 func (tiv *TemplateInputValidation) Validate(inputType, input string) (string, bool) {
-	if inputType == "float" {
+	switch inputType {
+	case "float":
 		numValue, err := strconv.ParseFloat(input, 64)
 		if err != nil {
 			return "must be a valid number (float)", false
 		}
-
-		if tiv.Min != nil && float64(numValue) < *tiv.Min {
+		if tiv.Min != nil && numValue < *tiv.Min {
 			return fmt.Sprintf("number must be greater than %v", *tiv.Min), false
 		}
-
-		if tiv.Max != nil && float64(numValue) > *tiv.Max {
+		if tiv.Max != nil && numValue > *tiv.Max {
 			return fmt.Sprintf("number must be less than %v", *tiv.Max), false
 		}
-	}
-
-	if inputType == "int" {
+	case "int":
 		numValue, err := strconv.Atoi(input)
 		if err != nil {
 			return "must be a valid number (integer)", false
 		}
-
 		if tiv.Min != nil && numValue < int(*tiv.Min) {
 			return fmt.Sprintf("number must be greater than %v", *tiv.Min), false
 		}
-
 		if tiv.Max != nil && numValue > int(*tiv.Max) {
 			return fmt.Sprintf("number must be less than %v", *tiv.Max), false
 		}
-	}
-
-	if inputType == "string" {
+	case "string":
 		if tiv.Pattern != "" {
 			regex, err := regexp.Compile(tiv.Pattern)
 			if err != nil {
 				return fmt.Sprintf("invalid regex: %v %v", err, tiv.Pattern), false
 			}
-
 			if !regex.MatchString(input) {
 				return fmt.Sprintf("should match pattern `%s`", tiv.Pattern), false
 			}
 		}
-
-		if tiv.MinLen != nil {
-			if len(input) < *tiv.MinLen {
-				return fmt.Sprintf("need to be at least %d characters", *tiv.MinLen), false
-			}
+		if tiv.MinLen != nil && len(input) < *tiv.MinLen {
+			return fmt.Sprintf("need to be at least %d characters", *tiv.MinLen), false
 		}
-
-		if tiv.MaxLen != nil {
-			if len(input) > *tiv.MaxLen {
-				return fmt.Sprintf("cannot be longer than %d characters", *tiv.MaxLen), false
-			}
+		if tiv.MaxLen != nil && len(input) > *tiv.MaxLen {
+			return fmt.Sprintf("cannot be longer than %d characters", *tiv.MaxLen), false
 		}
 	}
 
@@ -103,7 +91,6 @@ type TemplateInput struct {
 	Default     string                  `yaml:"default"`
 	Required    bool                    `yaml:"required"`
 	Description string                  `yaml:"description"`
-	Pattern     string                  `yaml:"pattern"`
 	Type        string                  `yaml:"type"`
 	Validate    TemplateInputValidation `yaml:"validate,omitempty"`
 }
@@ -140,17 +127,11 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, ErrNotExists
 		}
-
 		return nil, err
 	}
 
 	var template TemplateData
-	buffer := bytes.NewBuffer(data)
-
-	yamlDecoder := yaml.NewDecoder(buffer)
-
-	err = yamlDecoder.Decode(&template)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &template); err != nil {
 		return nil, err
 	}
 
@@ -196,7 +177,10 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 			Render(td.Name + " - " + td.Description),
 	)
 
+	// fields rendered in the form to collect variables
+	// values from the user.
 	var fields []huh.Field
+
 	stringPtrs := make(map[string]*string)
 	boolPtrs := make(map[string]*bool)
 
