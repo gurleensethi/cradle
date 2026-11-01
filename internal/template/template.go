@@ -162,8 +162,8 @@ func castInput(inputType, value string) any {
 // Values are cast to their declared type (int, float, or string) before being returned.
 func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 	userInputs := make(map[string]any)
-	for _, input := range td.Inputs {
-		userInputs[input.Name] = nil
+	for _, in := range td.Inputs {
+		userInputs[in.Name] = nil
 	}
 
 	if len(td.Inputs) == 0 {
@@ -177,76 +177,57 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 			Render(td.Name + " - " + td.Description),
 	)
 
-	// fields rendered in the form to collect variables
-	// values from the user.
 	var fields []huh.Field
-
-	stringPtrs := make(map[string]*string)
-	boolPtrs := make(map[string]*bool)
-
-	for _, input := range td.Inputs {
-		title := input.Name
-		if input.Required {
+	for _, in := range td.Inputs {
+		title := in.Name
+		if in.Required {
 			title += "*"
 		}
 
-		description := input.Description
-		if input.Default != "" {
-			description += "\n(default: " + input.Default + ")"
+		description := in.Description
+		if in.Default != "" {
+			description += "\n(default: " + in.Default + ")"
 		}
 
-		switch input.Type {
-		case "bool":
+		if in.Type == "bool" {
 			b := false
-			if v, ok := castInput(input.Type, input.Default).(bool); ok {
+			if v, ok := castInput(in.Type, in.Default).(bool); ok {
 				b = v
 			}
 			ptr := &b
-			boolPtrs[input.Name] = ptr
-
-			field := huh.NewConfirm().
+			fields = append(fields, huh.NewConfirm().
 				Title(title).
 				Description(description).
 				Value(ptr).
-				Key(input.Name)
+				Key(in.Name))
+			continue
+		}
 
-			fields = append(fields, field)
-		default:
-			value := ""
-			ptr := &value
-			stringPtrs[input.Name] = ptr
-
-			field := huh.NewInput().
-				Title(title).
-				Description(description).
-				PlaceholderFunc(func() string {
-					return input.Default
-				}, nil).
-				Value(ptr).
-				Validate(func(s string) error {
-					if s == "" {
-						if input.Default != "" {
-							return nil
-						}
-						if input.Required {
-							return errors.New(input.Name + " is required")
-						}
+		value := ""
+		ptr := &value
+		fields = append(fields, huh.NewInput().
+			Title(title).
+			Description(description).
+			Placeholder(in.Default).
+			Value(ptr).
+			Validate(func(s string) error {
+				if s == "" {
+					if in.Default != "" || !in.Required {
 						return nil
 					}
+					return errors.New(in.Name + " is required")
+				}
 
-					validationMessage, isValid := input.Validate.Validate(input.Type, s)
-					if !isValid {
-						if input.Validate.Message != "" {
-							validationMessage = input.Validate.Message
-						}
-						return errors.New(input.Name + " " + validationMessage)
+				validationMessage, isValid := in.Validate.Validate(in.Type, s)
+				if !isValid {
+					if in.Validate.Message != "" {
+						validationMessage = in.Validate.Message
 					}
-					return nil
-				}).
-				Key(input.Name)
-
-			fields = append(fields, field)
-		}
+					return errors.New(in.Name + " " + validationMessage)
+				}
+				return nil
+			}).
+			Key(in.Name))
 	}
 
 	form := huh.NewForm(
@@ -257,21 +238,16 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 		return nil, err
 	}
 
-	// Sync bound values back into the result map, applying defaults for empty inputs.
-	for _, input := range td.Inputs {
-		switch input.Type {
+	for _, in := range td.Inputs {
+		switch in.Type {
 		case "bool":
-			if ptr, ok := boolPtrs[input.Name]; ok && ptr != nil {
-				userInputs[input.Name] = *ptr
-			}
+			userInputs[in.Name] = form.GetBool(in.Name)
 		default:
-			if ptr, ok := stringPtrs[input.Name]; ok && ptr != nil {
-				value := *ptr
-				if value == "" && input.Default != "" {
-					value = input.Default
-				}
-				userInputs[input.Name] = castInput(input.Type, value)
+			value := form.GetString(in.Name)
+			if value == "" && in.Default != "" {
+				value = in.Default
 			}
+			userInputs[in.Name] = castInput(in.Type, value)
 		}
 	}
 
