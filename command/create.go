@@ -13,6 +13,9 @@ import (
 	"text/template"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/gurleensethi/cradle/internal/config"
 	cradleTemplate "github.com/gurleensethi/cradle/internal/template"
 	"github.com/gurleensethi/cradle/internal/types"
@@ -37,8 +40,27 @@ func Create() *cli.Command {
 				Usage:    "specify a template to use for project creation",
 				Required: false,
 			},
+			&cli.BoolFlag{
+				Name:     "i",
+				Usage:    "create project interactively, launches a TUI",
+				Required: false,
+				Value:    false,
+			},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
+			if c.Bool("i") {
+				newProjectPath, err := createProjectInteractive()
+				if err != nil {
+					return err
+				}
+
+				if config.Get().CradleCommandOut {
+					fmt.Fprintf(os.Stderr, "eval cd %s", newProjectPath)
+				}
+
+				return nil
+			}
+
 			if c.Args().Len() == 0 {
 				return fmt.Errorf("provide a project name")
 			}
@@ -65,6 +87,21 @@ type createProjectParams struct {
 	Name     string
 	Temp     bool
 	Template string
+}
+
+func createProjectInteractive() (string, error) {
+	program := tea.NewProgram(newCreateProjectModel())
+
+	returnModel, err := program.Run()
+	if err != nil {
+		return "", fmt.Errorf("failed to launch in interactive mode: %w", err)
+	}
+
+	if createProjectModel, ok := returnModel.(createProjectModel); ok {
+		fmt.Println(createProjectModel)
+	}
+
+	return "", nil
 }
 
 // createProject prepares the project files from the template (if any) and
@@ -175,4 +212,94 @@ func createProjectOnDisk(projectPath string, files []projectFile) error {
 	}
 
 	return nil
+}
+
+type createProjectModel struct {
+	UserInputProjectName     string
+	UserInputProjectTemplate string
+
+	Form      *huh.Form
+	FormModel huh.Model
+
+	WindowSize tea.WindowSizeMsg
+}
+
+// Init returns the initial command.
+func (m createProjectModel) Init() tea.Cmd {
+	return m.Form.Init()
+}
+
+// Update handles messages for the create project model.
+func (m createProjectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.WindowSize = msg
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c":
+			return m, tea.Quit
+		}
+	}
+
+	_, cmd = m.Form.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+// View renders the create project model.
+func (m createProjectModel) View() tea.View {
+	view := tea.View{}
+
+	rootStyle := lipgloss.NewStyle().
+		AlignVertical(lipgloss.Center).
+		AlignHorizontal(lipgloss.Center).
+		Width(m.WindowSize.Width).
+		Height(m.WindowSize.Height)
+
+	boxStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(4)
+
+	title := lipgloss.NewStyle().
+		MarginBottom(1).
+		Render("Cradle - Create new project")
+
+	view.SetContent(
+		rootStyle.Render(
+			lipgloss.JoinVertical(
+				lipgloss.Center,
+				title,
+				boxStyle.Render(
+					m.Form.WithWidth(m.WindowSize.Width/2).
+						WithHeight(m.WindowSize.Height/2).
+						View(),
+				),
+			),
+		),
+	)
+
+	view.AltScreen = true
+
+	return view
+}
+
+func newCreateProjectModel() createProjectModel {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Enter project name").
+				Placeholder("Project name").
+				Key("project_name"),
+			huh.NewConfirm().
+				Title("Temporary project").
+				Key("temporary"),
+		),
+	).WithShowHelp(true)
+
+	return createProjectModel{
+		Form: form,
+	}
 }
