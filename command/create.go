@@ -67,7 +67,8 @@ type createProjectParams struct {
 	Template string
 }
 
-// createProject creates a project directory and registers it. Returns the created path.
+// createProject prepares the project files from the template (if any) and
+// persists the project to disk and config. Returns the created project path.
 func createProject(params createProjectParams) (string, error) {
 	newProjectPath := path.Join(config.Get().CradleHomeDirPath, params.Name)
 
@@ -78,7 +79,7 @@ func createProject(params createProjectParams) (string, error) {
 		}
 	}
 
-	files := make(map[string]string)
+	files := []projectFile{}
 
 	// If a template is specified, use it to create the project
 	if params.Template != "" {
@@ -107,8 +108,8 @@ func createProject(params createProjectParams) (string, error) {
 
 			t, err := template.New("").Parse(string(templateFile))
 			if err != nil {
-				// TODO: add better error message, denoting which file failed
-				// TODO: rendering and why.
+				// TODO: wrap the error with the failing file path and the
+				// underlying parse reason for easier debugging.
 				return "", err
 			}
 
@@ -117,33 +118,16 @@ func createProject(params createProjectParams) (string, error) {
 				return "", err
 			}
 
-			files[filePath] = buffer.String()
+			files = append(files, projectFile{
+				Path:    filePath,
+				Content: buffer.String(),
+			})
 		}
 	}
 
-	// Create the project directory
-	err := os.Mkdir(newProjectPath, os.ModePerm)
+	err := createProjectOnDisk(newProjectPath, files)
 	if err != nil {
-		if errors.Is(err, os.ErrExist) {
-			return "", fmt.Errorf("failed: '%s' directory already exists", newProjectPath)
-		}
 		return "", err
-	}
-
-	for filePath, fileContent := range files {
-		// Make sure the full directory path exists
-		directory := path.Join(newProjectPath, filepath.Dir(filePath))
-
-		err = os.MkdirAll(directory, os.ModePerm)
-		if err != nil {
-			return "", fmt.Errorf("failed to create directory '%s': %w", directory, err)
-		}
-
-		err := os.WriteFile(path.Join(newProjectPath, filePath), []byte(fileContent), 0o644)
-		if err != nil {
-			// TODO: return better error message, denoting which file failed to be created.
-			return "", fmt.Errorf("failed to write to file '%s': %w", filePath, err)
-		}
 	}
 
 	cradleProject := types.CradleProject{
@@ -154,4 +138,41 @@ func createProject(params createProjectParams) (string, error) {
 	}
 
 	return newProjectPath, config.AddProject(cradleProject)
+}
+
+// projectFile represents a file that is to be created inside a project.
+type projectFile struct {
+	Path    string
+	Content string
+}
+
+// createProjectOnDisk creates the project folder and provided files on disk.
+func createProjectOnDisk(projectPath string, files []projectFile) error {
+	// Create the project directory
+	err := os.Mkdir(projectPath, os.ModePerm)
+	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("failed: '%s' directory already exists", projectPath)
+		}
+		return err
+	}
+
+	for _, file := range files {
+		// Make sure the full directory path exists
+		directory := path.Join(projectPath, filepath.Dir(file.Path))
+
+		err = os.MkdirAll(directory, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create directory '%s': %w", directory, err)
+		}
+
+		err := os.WriteFile(path.Join(projectPath, file.Path), []byte(file.Content), 0o644)
+		if err != nil {
+			// TODO: include the project path in the error so callers can tell
+			// which file failed to be written.
+			return fmt.Errorf("failed to write to file '%s': %w", file.Path, err)
+		}
+	}
+
+	return nil
 }
