@@ -255,29 +255,54 @@ func (m createProjectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m createProjectModel) View() tea.View {
 	view := tea.View{}
 
-	rootStyle := lipgloss.NewStyle().
-		AlignVertical(lipgloss.Center).
-		AlignHorizontal(lipgloss.Center).
-		Width(m.WindowSize.Width).
-		Height(m.WindowSize.Height)
+	width := m.WindowSize.Width
+	height := m.WindowSize.Height
+	if width == 0 {
+		width = 80
+	}
+	if height == 0 {
+		height = 24
+	}
 
-	boxStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(4)
-
-	title := lipgloss.NewStyle().
+	// Header bar, consistent with the main Cradle TUI.
+	header := lipgloss.NewStyle().
+		Padding(1).
 		MarginBottom(1).
-		Render("Cradle - Create new project")
+		Bold(true).
+		Width(width).
+		Align(lipgloss.Center).
+		Background(lipgloss.Color("#2D2D2D")).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Render("cradle  ·  create new project")
+
+	// Footer bar, consistent with the main Cradle TUI.
+	footer := lipgloss.NewStyle().
+		MarginTop(1).
+		Padding(0, 2).
+		Bold(true).
+		Width(width).
+		Align(lipgloss.Left).
+		Background(lipgloss.Color("#2D2D2D")).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Render("esc to cancel")
+
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#808080")).
+		Padding(2, 4)
+
+	form := m.Form.WithWidth(width / 2).WithHeight(height / 2).View()
+
+	body := lipgloss.NewStyle().
+		Width(width).
+		Align(lipgloss.Center).
+		Render(boxStyle.Render(form))
 
 	view.SetContent(
-		rootStyle.Render(
-			lipgloss.JoinVertical(
-				lipgloss.Center,
-				title,
-				boxStyle.Render(
-					m.Form.WithWidth(m.WindowSize.Width/2).
-						WithHeight(m.WindowSize.Height/2).
-						View(),
-				),
-			),
+		lipgloss.JoinVertical(lipgloss.Left,
+			header,
+			body,
+			footer,
 		),
 	)
 
