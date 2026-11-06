@@ -100,8 +100,8 @@ type TemplateInput struct {
 // TemplateFile holds the raw contents of a template file.
 type TemplateFile string
 
-// TemplateData represents a loaded project template.
-type TemplateData struct {
+// Template represents a loaded project template.
+type Template struct {
 	FileName    string                  `yaml:"-"`
 	Name        string                  `yaml:"name"`
 	Description string                  `yaml:"description"`
@@ -110,7 +110,7 @@ type TemplateData struct {
 }
 
 // Validate checks that the template has a name and at least one file.
-func (td *TemplateData) Validate() error {
+func (td *Template) Validate() error {
 	if len(td.Name) == 0 {
 		return errors.New("template name cannot be empty")
 	}
@@ -123,7 +123,7 @@ func (td *TemplateData) Validate() error {
 }
 
 // GetTemplate loads a template by name from the embedded filesystem.
-func GetTemplate(templateName string) (*TemplateData, error) {
+func GetTemplate(templateName string) (*Template, error) {
 	if templateFS == nil {
 		panic("template.SetTemplateFS must be called before GetTemplate")
 	}
@@ -136,7 +136,7 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 		return nil, fmt.Errorf("read template %q: %w", templateName, err)
 	}
 
-	var template TemplateData
+	var template Template
 	if err := yaml.Unmarshal(data, &template); err != nil {
 		return nil, fmt.Errorf("parse template %q: %w", templateName, err)
 	}
@@ -146,7 +146,7 @@ func GetTemplate(templateName string) (*TemplateData, error) {
 }
 
 // ListTemplates returns all available templates.
-func ListTemplates() ([]*TemplateData, error) {
+func ListTemplates() ([]*Template, error) {
 	if templateFS == nil {
 		return nil, errors.New("template.SetTemplateFS must be called before ListTemplates")
 	}
@@ -156,7 +156,7 @@ func ListTemplates() ([]*TemplateData, error) {
 		return nil, fmt.Errorf("list templates: %w", err)
 	}
 
-	var templates []*TemplateData
+	var templates []*Template
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -205,7 +205,7 @@ func parseInput(inputType, value string) any {
 
 // ReadUserInputs collects validated input values from the user.
 // Values are cast to their declared type (int, float, or string) before being returned.
-func ReadUserInputs(td *TemplateData) (map[string]any, error) {
+func ReadUserInputs(td *Template) (map[string]any, error) {
 	userInputs := make(map[string]any)
 	for _, in := range td.Inputs {
 		userInputs[in.Name] = nil
@@ -261,7 +261,7 @@ func ReadUserInputs(td *TemplateData) (map[string]any, error) {
 //	        value := form.GetString(in.Name)
 //	    }
 //	}
-func BuildInputFormFromTemplate(td *TemplateData) *huh.Form {
+func BuildInputFormFromTemplate(td *Template) *huh.Form {
 	var fields []huh.Field
 
 	for _, in := range td.Inputs {
