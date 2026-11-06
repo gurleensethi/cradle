@@ -323,15 +323,35 @@ func (m createProjectModel) View() tea.View {
 }
 
 func newCreateProjectModel() createProjectModel {
+	templates, err := cradleTemplate.ListTemplates()
+	if err != nil {
+		// TODO: handle error properly.
+		panic(err)
+	}
+
+	templateOptions := []huh.Option[string]{
+		huh.NewOption("Empty", "empty"),
+	}
+	for _, template := range templates {
+		templateOptions = append(templateOptions, huh.NewOption(template.Name, template.FileName))
+	}
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Title("Enter project name").
-				Placeholder("Project name").
+				Title("Project name").
+				Description("Name of the project to create.").
+				Placeholder("my-project").
 				Key("project_name"),
 			huh.NewConfirm().
 				Title("Temporary project").
+				Description("Mark the project as temporary so it can be cleaned up later.").
 				Key("temporary"),
+			huh.NewSelect[string]().
+				Title("Template").
+				Description("Template used to scaffold the project.").
+				Options(templateOptions...).
+				Key("template"),
 		),
 	).WithShowHelp(true)
 
