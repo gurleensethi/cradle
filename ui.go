@@ -142,14 +142,8 @@ func NewCradleUIModel() CradleUIModel {
 	filterStyles.Blurred.Prompt = lipgloss.NewStyle()
 	projectList.FilterInput.SetStyles(filterStyles)
 
-	var selectedProjectPath string
-	if len(config.Projects()) > 0 {
-		selectedProjectPath = config.Projects()[0].Path
-	}
-
 	return CradleUIModel{
-		ProjectList:         projectList,
-		SelectedProjectPath: selectedProjectPath,
+		ProjectList: projectList,
 	}
 }
 
