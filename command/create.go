@@ -293,9 +293,19 @@ func (m createProjectModel) View() tea.View {
 
 	form := m.Form.WithWidth(width / 2).WithHeight(height / 2).View()
 
+	// Body fills the remaining height so the footer sits at the bottom.
+	headerHeight := 3 // padding 1 top + 1 bottom + text line
+	footerHeight := 1
+	bodyHeight := height - headerHeight - footerHeight - 2 // margins
+	if bodyHeight < 1 {
+		bodyHeight = 1
+	}
+
 	body := lipgloss.NewStyle().
 		Width(width).
-		Align(lipgloss.Center).
+		Height(bodyHeight).
+		AlignVertical(lipgloss.Center).
+		AlignHorizontal(lipgloss.Center).
 		Render(boxStyle.Render(form))
 
 	view.SetContent(
